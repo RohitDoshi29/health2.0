@@ -121,6 +121,15 @@ def convert_quantity_to_grams(food: Food, quantity: float, unit: str) -> float:
     if unit_clean in ("slice", "slices"):
         return quantity * 35.0
 
+    if unit_clean in ("serving", "servings"):
+        return quantity * (food.serving_size or 100.0)
+
+    if unit_clean in ("plate", "plates"):
+        return quantity * 350.0
+
+    if unit_clean in ("glass", "glasses"):
+        return quantity * 250.0
+
     if unit_clean in ("piece", "pieces", "item", "items", "whole"):
         canonical = food.canonical_name.lower()
         if canonical in _PIECE_WEIGHTS_GRAMS:
