@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "684483169008",
+    "project_id": "health-97e8d",
+    "storage_bucket": "health-97e8d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684483169008:android:66488bafd2ec053aedd035",
+        "android_client_info": {
+          "package_name": "com.heathify.heathify_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "684483169008-p2kn11kh6c9e5gfhng2r32j1c7asapmq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq7UcYgAjVcYW9K3nM53g5HndzjVhJCgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "684483169008-p2kn11kh6c9e5gfhng2r32j1c7asapmq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
