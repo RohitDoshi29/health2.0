@@ -7,9 +7,12 @@ echo "=== Heathify Production Startup ==="
 echo "Applying database migrations..."
 alembic upgrade head
 
-# 2. Seed initial reference foods (idempotent)
+# 2. Seed initial reference foods and accounts (idempotent)
 echo "Checking seed food items..."
 python -m scripts.seed_foods
+
+echo "Checking seed user accounts..."
+python -m scripts.seed_users
 
 # 3. Import USDA foods if API key is provided (idempotent)
 if [ -n "$USDA_API_KEY" ]; then
