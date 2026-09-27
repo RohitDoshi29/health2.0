@@ -9,7 +9,7 @@ Food table never silently rewrite the nutrition of a historical meal.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, func
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -47,6 +47,14 @@ class MealItem(Base):
 
     # Gemini's detection confidence (0-1). Null for manually-added items.
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Verification Engine metadata
+    original_calories: Mapped[float | None] = mapped_column(Float, nullable=True)
+    final_calories: Mapped[float | None] = mapped_column(Float, nullable=True)
+    verification_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    verification_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    verification_sources: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    verification_note: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

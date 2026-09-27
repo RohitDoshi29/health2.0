@@ -10,6 +10,12 @@ class MealItemModel {
   final double fat;
   final double fiber;
   final double? confidence;
+  final double? originalCalories;
+  final double? finalCalories;
+  final String? verificationStatus;
+  final double? verificationConfidence;
+  final List<String>? verificationSources;
+  final String? verificationNote;
   final DateTime createdAt;
 
   MealItemModel({
@@ -24,6 +30,12 @@ class MealItemModel {
     required this.fat,
     required this.fiber,
     this.confidence,
+    this.originalCalories,
+    this.finalCalories,
+    this.verificationStatus,
+    this.verificationConfidence,
+    this.verificationSources,
+    this.verificationNote,
     required this.createdAt,
   });
 
@@ -40,6 +52,12 @@ class MealItemModel {
       fat: (json['fat'] as num?)?.toDouble() ?? 0.0,
       fiber: (json['fiber'] as num?)?.toDouble() ?? 0.0,
       confidence: (json['confidence'] as num?)?.toDouble(),
+      originalCalories: (json['original_calories'] as num?)?.toDouble(),
+      finalCalories: (json['final_calories'] as num?)?.toDouble(),
+      verificationStatus: json['verification_status'] as String?,
+      verificationConfidence: (json['verification_confidence'] as num?)?.toDouble(),
+      verificationSources: (json['verification_sources'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      verificationNote: json['verification_note'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

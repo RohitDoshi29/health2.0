@@ -5,6 +5,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.nutrition import NutritionSummary
+from app.schemas.verification import VerificationDetail
 
 
 class QuantityUnit(str, Enum):
@@ -62,7 +63,7 @@ class GeminiAnalysisResult(BaseModel):
 
 
 class MealItemAnalysis(BaseModel):
-    """A single analyzed meal item: detection + calculated nutrition.
+    """A single analyzed meal item: detection + calculated nutrition + verification.
 
     Frontends should check `matched` (or `matched_food_id is not None`) to
     distinguish between a food whose nutrition was verified in the database
@@ -73,6 +74,8 @@ class MealItemAnalysis(BaseModel):
     quantity: float
     unit: QuantityUnit
     estimated_calories: float = Field(ge=0)
+    original_calories: float | None = Field(default=None, ge=0)
+    final_calories: float | None = Field(default=None, ge=0)
     protein: float = Field(ge=0)
     carbohydrates: float = Field(ge=0)
     fat: float = Field(ge=0)
@@ -90,6 +93,10 @@ class MealItemAnalysis(BaseModel):
     )
     bounding_box: BoundingBox | None = Field(
         default=None, description="Normalized 2D bounding box if detected"
+    )
+    verification: VerificationDetail | None = Field(
+        default=None,
+        description="Detailed verification report from the Calorie Verification Engine",
     )
 
 

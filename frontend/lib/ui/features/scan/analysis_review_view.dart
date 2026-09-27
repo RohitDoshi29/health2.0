@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/analysis_model.dart';
 import '../../../data/repositories/favorite_repository.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/image_bounding_box_overlay.dart';
@@ -16,6 +17,7 @@ class AnalysisReviewView extends StatefulWidget {
 
 class _AnalysisReviewViewState extends State<AnalysisReviewView> {
   int? _selectedItemIndex;
+  final Set<int> _expandedVerificationIndices = {};
 
   void _showSaveFavoriteDialog(BuildContext context, ScanViewModel scanVm) {
     final defaultName = scanVm.editableItems.isNotEmpty
@@ -250,90 +252,135 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                                 width: isSelected ? 1.8 : 1.0,
                               ),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            item.name,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppTheme.textPrimary,
-                                            ),
-                                          ),
-                                          if (item.confidence != null) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: Colors.green.shade50,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                '${(item.confidence! * 100).toInt()}% match',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.green.shade700,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${item.estimatedCalories.toStringAsFixed(0)} kcal • P: ${item.protein}g • C: ${item.carbohydrates}g • F: ${item.fat}g',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Portion Modifier
                                 Row(
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove_circle_outline, size: 20),
-                                      color: AppTheme.textSecondary,
-                                      onPressed: item.quantity > 10
-                                          ? () => scanVm.updateItemQuantity(
-                                              index, item.quantity - 10)
-                                          : null,
-                                    ),
-                                    Text(
-                                      '${item.quantity.toStringAsFixed(0)} ${item.unit}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            crossAxisAlignment: WrapCrossAlignment.center,
+                                            children: [
+                                              Text(
+                                                item.name,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.textPrimary,
+                                                ),
+                                              ),
+                                              if (item.verification != null)
+                                                _buildVerificationBadge(item)
+                                              else if (item.confidence != null) ...[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.green.shade50,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    '${(item.confidence! * 100).toInt()}% match',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.green.shade700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${item.estimatedCalories.toStringAsFixed(0)} kcal • P: ${item.protein}g • C: ${item.carbohydrates}g • F: ${item.fat}g',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add_circle_outline, size: 20),
-                                      color: AppTheme.primaryGreen,
-                                      onPressed: () => scanVm.updateItemQuantity(
-                                          index, item.quantity + 10),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 20),
-                                      color: Colors.red.shade400,
-                                      onPressed: () {
-                                        if (_selectedItemIndex == index) {
-                                          _selectedItemIndex = null;
-                                        }
-                                        scanVm.removeItem(index);
-                                      },
+                                    // Portion Modifier
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.remove_circle_outline, size: 20),
+                                          color: AppTheme.textSecondary,
+                                          onPressed: item.quantity > 10
+                                              ? () => scanVm.updateItemQuantity(
+                                                  index, item.quantity - 10)
+                                              : null,
+                                        ),
+                                        Text(
+                                          '${item.quantity.toStringAsFixed(0)} ${item.unit}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.add_circle_outline, size: 20),
+                                          color: AppTheme.primaryGreen,
+                                          onPressed: () => scanVm.updateItemQuantity(
+                                              index, item.quantity + 10),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 20),
+                                          color: Colors.red.shade400,
+                                          onPressed: () {
+                                            if (_selectedItemIndex == index) {
+                                              _selectedItemIndex = null;
+                                            }
+                                            _expandedVerificationIndices.remove(index);
+                                            scanVm.removeItem(index);
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
+                                if (item.verification != null) ...[
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (_expandedVerificationIndices.contains(index)) {
+                                          _expandedVerificationIndices.remove(index);
+                                        } else {
+                                          _expandedVerificationIndices.add(index);
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            _expandedVerificationIndices.contains(index)
+                                                ? 'Hide verification details ▴'
+                                                : 'How was this verified? ▾',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.primaryGreen,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (_expandedVerificationIndices.contains(index))
+                                    _buildVerificationDetails(item),
+                                ],
                               ],
                             ),
                           ),
@@ -388,6 +435,139 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationBadge(MealItemAnalysisModel item) {
+    final v = item.verification;
+    if (v == null) return const SizedBox.shrink();
+
+    final status = v.verificationStatus;
+    final conf = v.confidenceScore.toInt();
+
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+    String label;
+
+    switch (status) {
+      case 'verified':
+        bgColor = Colors.green.shade50;
+        textColor = Colors.green.shade800;
+        icon = Icons.check_circle_rounded;
+        label = '✓ Verified ($conf%)';
+        break;
+      case 'verified_with_warning':
+        bgColor = Colors.amber.shade50;
+        textColor = Colors.amber.shade900;
+        icon = Icons.warning_amber_rounded;
+        label = '⚠ Discrepancy (${v.discrepancyPercent.toStringAsFixed(0)}%)';
+        break;
+      case 'corrected':
+        bgColor = Colors.blue.shade50;
+        textColor = Colors.blue.shade800;
+        icon = Icons.restart_alt_rounded;
+        label = '↻ Adjusted (${v.originalCalories.toStringAsFixed(0)} → ${v.finalCalories.toStringAsFixed(0)} kcal)';
+        break;
+      case 'needs_confirmation':
+        bgColor = Colors.red.shade50;
+        textColor = Colors.red.shade800;
+        icon = Icons.help_outline_rounded;
+        label = '⚠ Needs Review';
+        break;
+      case 'low_confidence':
+      default:
+        bgColor = Colors.orange.shade50;
+        textColor = Colors.orange.shade800;
+        icon = Icons.info_outline_rounded;
+        label = '⚠ Low Confidence';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationDetails(MealItemAnalysisModel item) {
+    final v = item.verification;
+    if (v == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (v.verificationNote.isNotEmpty) ...[
+            Text(
+              v.verificationNote,
+              style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 6),
+            const Divider(height: 1),
+            const SizedBox(height: 6),
+          ],
+          ...v.sourceBreakdown.entries.map((entry) {
+            String sourceLabel = entry.key.replaceAll('_', ' ').toUpperCase();
+            if (entry.key == 'local_database') sourceLabel = 'Local Reference DB';
+            if (entry.key == 'usda_fdc') sourceLabel = 'USDA FoodData Central';
+            if (entry.key == 'macro_consistency') sourceLabel = 'Macro Calc (4-9-4)';
+            if (entry.key == 'barcode_label') sourceLabel = 'Barcode Nutrition Label';
+            if (entry.key == 'ingredient_decomposition') sourceLabel = 'Ingredient Recipe Sum';
+            if (entry.key == 'ai_estimate') sourceLabel = 'AI Visual Estimate';
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(sourceLabel, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  Text('${entry.value.toStringAsFixed(0)} kcal', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Final Caloric Value', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+              Text('${v.finalCalories.toStringAsFixed(0)} kcal', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Confidence: Food ${(v.confidenceBreakdown.foodConfidence).toInt()}% • Portion ${(v.confidenceBreakdown.portionConfidence).toInt()}% • Nutrition ${(v.confidenceBreakdown.nutritionConfidence).toInt()}%',
+                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

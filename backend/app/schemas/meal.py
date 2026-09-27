@@ -25,6 +25,12 @@ class MealItemCreate(BaseModel):
     fat: float = Field(ge=0, default=0.0)
     fiber: float = Field(ge=0, default=0.0)
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    original_calories: float | None = Field(default=None, ge=0)
+    final_calories: float | None = Field(default=None, ge=0)
+    verification_status: str | None = None
+    verification_confidence: float | None = Field(default=None, ge=0.0, le=100.0)
+    verification_sources: list[str] | None = None
+    verification_note: str | None = None
 
 
 class MealItemRead(BaseModel):
@@ -41,6 +47,12 @@ class MealItemRead(BaseModel):
     fat: float
     fiber: float
     confidence: float | None
+    original_calories: float | None = None
+    final_calories: float | None = None
+    verification_status: str | None = None
+    verification_confidence: float | None = None
+    verification_sources: list[str] | None = None
+    verification_note: str | None = None
     created_at: datetime
 
 

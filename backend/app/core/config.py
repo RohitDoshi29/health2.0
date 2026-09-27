@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     FIREBASE_PROJECT_ID: str = ""
 
+    # --- Verification & External Nutrition Sources ---
+    USDA_API_KEY: str = ""
+    OPENFOODFACTS_ENABLED: bool = True
+
 
     @property
     def cors_origins_list(self) -> list[str]:

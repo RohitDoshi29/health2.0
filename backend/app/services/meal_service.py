@@ -22,8 +22,9 @@ from app.models.meal_item import MealItem
 from app.schemas.analysis import GeminiAnalysisResult, MealAnalysisResponse, MealItemAnalysis
 from app.schemas.meal import MealCreate, MealUpdate
 from app.schemas.nutrition import NutritionSummary
+from app.services.calorie_verification_service import CalorieVerificationService, VerificationInput
 from app.services.gemini_service import GeminiService
-from app.services.nutrition_service import NutritionService
+from app.services.nutrition_service import NutritionService, convert_quantity_to_grams
 from app.utils.image import resize_if_needed, save_image_bytes, validate_and_read_image
 
 
@@ -63,26 +64,56 @@ class MealService:
 
 
         items: list[MealItemAnalysis] = []
-        nutrition_results = []
         unmatched_items: list[str] = []
+        total_cals = 0.0
+        total_p = 0.0
+        total_c = 0.0
+        total_f = 0.0
+        total_fib = 0.0
+
         for detection in detection_result.foods:
             nutrition = await self.nutrition_service.calculate_for_detection(
                 name=detection.name,
                 quantity=detection.estimated_quantity,
                 unit=detection.unit.value,
             )
-            nutrition_results.append(nutrition)
 
             is_matched = nutrition.matched
             if not is_matched:
                 unmatched_items.append(detection.name)
+
+            grams = (
+                convert_quantity_to_grams(
+                    nutrition.matched_food, detection.estimated_quantity, detection.unit.value
+                )
+                if nutrition.matched_food
+                else detection.estimated_quantity
+            )
+
+            v_input = VerificationInput(
+                food_name=detection.name,
+                detected_quantity=detection.estimated_quantity,
+                unit=detection.unit.value,
+                grams=grams,
+                calories=nutrition.calories,
+                protein=nutrition.protein,
+                carbohydrates=nutrition.carbohydrates,
+                fat=nutrition.fat,
+                fiber=nutrition.fiber,
+                nutrition_source="local_database" if is_matched else "ai_estimate",
+                food_confidence=detection.confidence,
+                is_matched_in_db=is_matched,
+            )
+            verification = CalorieVerificationService.verify(v_input)
 
             items.append(
                 MealItemAnalysis(
                     name=detection.name,
                     quantity=detection.estimated_quantity,
                     unit=detection.unit,
-                    estimated_calories=nutrition.calories,
+                    estimated_calories=verification.final_calories,
+                    original_calories=verification.original_calories,
+                    final_calories=verification.final_calories,
                     protein=nutrition.protein,
                     carbohydrates=nutrition.carbohydrates,
                     fat=nutrition.fat,
@@ -93,10 +124,22 @@ class MealService:
                     if is_matched and nutrition.matched_food
                     else None,
                     bounding_box=detection.bounding_box,
+                    verification=verification,
                 )
             )
+            total_cals += verification.final_calories
+            total_p += nutrition.protein
+            total_c += nutrition.carbohydrates
+            total_f += nutrition.fat
+            total_fib += nutrition.fiber
 
-        total: NutritionSummary = self.nutrition_service.sum_totals(nutrition_results)
+        total = NutritionSummary(
+            estimated_calories=round(total_cals, 2),
+            protein=round(total_p, 2),
+            carbohydrates=round(total_c, 2),
+            fat=round(total_f, 2),
+            fiber=round(total_fib, 2),
+        )
         image_url: str | None = None
         try:
             image_url = save_image_bytes(optimized.content, optimized.content_type)
@@ -145,6 +188,12 @@ class MealService:
                 fat=item.fat,
                 fiber=item.fiber,
                 confidence=item.confidence,
+                original_calories=item.original_calories,
+                final_calories=item.final_calories,
+                verification_status=item.verification_status,
+                verification_confidence=item.verification_confidence,
+                verification_sources=item.verification_sources,
+                verification_note=item.verification_note,
             )
             for item in payload.items
         ]
