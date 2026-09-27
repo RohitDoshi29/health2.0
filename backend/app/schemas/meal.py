@@ -3,7 +3,8 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.analysis import QuantityUnit
 
@@ -18,19 +19,31 @@ class MealItemCreate(BaseModel):
     food_id: uuid.UUID | None = None
     food_name: str = Field(min_length=1)
     quantity: float = Field(gt=0)
-    unit: QuantityUnit
+    unit: str = "g"
     calories: float = Field(ge=0)
     protein: float = Field(ge=0, default=0.0)
     carbohydrates: float = Field(ge=0, default=0.0)
     fat: float = Field(ge=0, default=0.0)
     fiber: float = Field(ge=0, default=0.0)
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    original_calories: float | None = Field(default=None, ge=0)
-    final_calories: float | None = Field(default=None, ge=0)
+    original_calories: float | None = None
+    final_calories: float | None = None
     verification_status: str | None = None
-    verification_confidence: float | None = Field(default=None, ge=0.0, le=100.0)
+    verification_confidence: float | None = None
     verification_sources: list[str] | None = None
     verification_note: str | None = None
+
+    @field_validator("food_id", mode="before")
+    @classmethod
+    def clean_food_id(cls, v: Any) -> uuid.UUID | None:
+        if not v or v == "" or v == "null":
+            return None
+        if isinstance(v, uuid.UUID):
+            return v
+        try:
+            return uuid.UUID(str(v))
+        except (ValueError, TypeError):
+            return None
 
 
 class MealItemRead(BaseModel):

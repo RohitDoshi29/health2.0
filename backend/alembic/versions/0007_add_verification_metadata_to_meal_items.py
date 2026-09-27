@@ -33,3 +33,4 @@ def downgrade() -> None:
     op.drop_column("meal_items", "verification_status")
     op.drop_column("meal_items", "final_calories")
     op.drop_column("meal_items", "original_calories")
+

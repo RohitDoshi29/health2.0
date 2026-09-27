@@ -227,3 +227,4 @@ def test_scenario_8_mixed_dish_ingredient_decomposition() -> None:
         VerificationStatus.VERIFIED_WITH_WARNING,
     )
     assert result.source_breakdown["ingredient_decomposition"] > 0
+

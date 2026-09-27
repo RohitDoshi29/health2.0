@@ -39,54 +39,35 @@ class HomeViewModel extends ChangeNotifier {
   })  : _mealRepository = mealRepository ?? MealRepository(),
         _goalRepository = goalRepository ?? GoalRepository();
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    final localA = a.isUtc ? a.toLocal() : a;
+    final localB = b.isUtc ? b.toLocal() : b;
+    return localA.year == localB.year && localA.month == localB.month && localA.day == localB.day;
+  }
+
   double get todayCalories {
     final now = DateTime.now();
-    return _meals
-        .where((m) =>
-            m.createdAt.toLocal().year == now.year &&
-            m.createdAt.toLocal().month == now.month &&
-            m.createdAt.toLocal().day == now.day)
-        .fold(0.0, (sum, m) => sum + m.totalCalories);
+    return _meals.where((m) => _isSameDay(m.createdAt, now)).fold(0.0, (sum, m) => sum + m.totalCalories);
   }
 
   double get todayProtein {
     final now = DateTime.now();
-    return _meals
-        .where((m) =>
-            m.createdAt.toLocal().year == now.year &&
-            m.createdAt.toLocal().month == now.month &&
-            m.createdAt.toLocal().day == now.day)
-        .fold(0.0, (sum, m) => sum + m.totalProtein);
+    return _meals.where((m) => _isSameDay(m.createdAt, now)).fold(0.0, (sum, m) => sum + m.totalProtein);
   }
 
   double get todayCarbs {
     final now = DateTime.now();
-    return _meals
-        .where((m) =>
-            m.createdAt.toLocal().year == now.year &&
-            m.createdAt.toLocal().month == now.month &&
-            m.createdAt.toLocal().day == now.day)
-        .fold(0.0, (sum, m) => sum + m.totalCarbohydrates);
+    return _meals.where((m) => _isSameDay(m.createdAt, now)).fold(0.0, (sum, m) => sum + m.totalCarbohydrates);
   }
 
   double get todayFat {
     final now = DateTime.now();
-    return _meals
-        .where((m) =>
-            m.createdAt.toLocal().year == now.year &&
-            m.createdAt.toLocal().month == now.month &&
-            m.createdAt.toLocal().day == now.day)
-        .fold(0.0, (sum, m) => sum + m.totalFat);
+    return _meals.where((m) => _isSameDay(m.createdAt, now)).fold(0.0, (sum, m) => sum + m.totalFat);
   }
 
   double get todayFiber {
     final now = DateTime.now();
-    return _meals
-        .where((m) =>
-            m.createdAt.toLocal().year == now.year &&
-            m.createdAt.toLocal().month == now.month &&
-            m.createdAt.toLocal().day == now.day)
-        .fold(0.0, (sum, m) => sum + m.totalFiber);
+    return _meals.where((m) => _isSameDay(m.createdAt, now)).fold(0.0, (sum, m) => sum + m.totalFiber);
   }
 
   Future<void> loadDashboard() => loadMeals();
@@ -111,6 +92,32 @@ class HomeViewModel extends ChangeNotifier {
       _analytics = results[1] as DailyAnalyticsModel;
       _trends = results[2] as TrendsAnalyticsModel;
       _goal = _analytics?.goal;
+
+      // Ensure analytics reflects logged meals even if timezones diverge
+      if (_analytics != null && todayCalories > 0 && (_analytics!.consumedCalories == 0 || (_analytics!.consumedCalories < todayCalories))) {
+        final goal = _analytics!.goal;
+        final calProg = goal.calorieTarget > 0 ? (todayCalories / goal.calorieTarget) : 0.0;
+        final protProg = goal.proteinTarget > 0 ? (todayProtein / goal.proteinTarget) : 0.0;
+        final carbsProg = goal.carbohydratesTarget > 0 ? (todayCarbs / goal.carbohydratesTarget) : 0.0;
+        final fatProg = goal.fatTarget > 0 ? (todayFat / goal.fatTarget) : 0.0;
+        final fiberProg = goal.fiberTarget > 0 ? (todayFiber / goal.fiberTarget) : 0.0;
+
+        _analytics = DailyAnalyticsModel(
+          date: _analytics!.date,
+          consumedCalories: todayCalories,
+          consumedProtein: todayProtein,
+          consumedCarbohydrates: todayCarbs,
+          consumedFat: todayFat,
+          consumedFiber: todayFiber,
+          calorieProgress: calProg,
+          proteinProgress: protProg,
+          carbohydratesProgress: carbsProg,
+          fatProgress: fatProg,
+          fiberProgress: fiberProg,
+          mealsCount: _meals.where((m) => _isSameDay(m.createdAt, now)).length,
+          goal: goal,
+        );
+      }
     } catch (e) {
       _errorMessage = e.toString();
     } finally {

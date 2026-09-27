@@ -29,7 +29,7 @@ class MealRepository {
     final payload = {
       'meal_type': mealType,
       'image_url': imageUrl,
-      'created_at': now.toIso8601String(),
+      'created_at': now.toUtc().toIso8601String(),
       'items': items.map((i) => i.toMealItemCreateJson()).toList(),
     };
 
@@ -84,7 +84,7 @@ class MealRepository {
         'action': 'CREATE',
         'temp_meal_id': localId,
         'payload': payload,
-        'created_at': now.toIso8601String(),
+        'created_at': now.toUtc().toIso8601String(),
       };
       await _storage.addPendingSyncAction(action);
       await _syncManager?.refreshPendingCount();
@@ -137,7 +137,7 @@ class MealRepository {
           'id': 'action_del_${DateTime.now().millisecondsSinceEpoch}',
           'action': 'DELETE',
           'meal_id': mealId,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         };
         await _storage.addPendingSyncAction(action);
         await _syncManager?.refreshPendingCount();

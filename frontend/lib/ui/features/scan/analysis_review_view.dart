@@ -6,6 +6,7 @@ import '../../../data/repositories/favorite_repository.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/image_bounding_box_overlay.dart';
 import '../../core/widgets/macro_card.dart';
+import '../home/home_view_model.dart';
 import 'scan_view_model.dart';
 
 class AnalysisReviewView extends StatefulWidget {
@@ -413,6 +414,9 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                     onPressed: () async {
                       final success = await scanVm.saveMeal();
                       if (success && context.mounted) {
+                        try {
+                          context.read<HomeViewModel>().loadMeals();
+                        } catch (_) {}
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Meal saved successfully!'),

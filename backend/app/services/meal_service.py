@@ -175,13 +175,17 @@ class MealService:
             **totals,
         )
         if payload.created_at is not None:
-            meal.created_at = payload.created_at
+            if payload.created_at.tzinfo is None:
+                from datetime import UTC
+                meal.created_at = payload.created_at.replace(tzinfo=UTC)
+            else:
+                meal.created_at = payload.created_at
         meal.items = [
             MealItem(
                 food_id=item.food_id,
                 food_name=item.food_name,
                 quantity=item.quantity,
-                unit=item.unit.value,
+                unit=item.unit.value if hasattr(item.unit, "value") else str(item.unit),
                 calories=item.calories,
                 protein=item.protein,
                 carbohydrates=item.carbohydrates,

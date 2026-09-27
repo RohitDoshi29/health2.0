@@ -162,7 +162,7 @@ class MealItemAnalysisModel {
 
   Map<String, dynamic> toMealItemCreateJson() {
     return {
-      'food_id': matchedFoodId,
+      'food_id': (matchedFoodId != null && matchedFoodId!.trim().isNotEmpty) ? matchedFoodId : null,
       'food_name': name,
       'quantity': quantity,
       'unit': unit,
