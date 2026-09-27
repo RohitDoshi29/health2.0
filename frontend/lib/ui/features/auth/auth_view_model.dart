@@ -27,8 +27,23 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final isAuth = await _authRepository.isAuthenticated();
       if (isAuth) {
-        _currentUser = await _authRepository.getMe();
+        // Immediately authenticate with existing credentials so user is not stuck on loading screen
         _isAuthenticated = true;
+        _isLoading = false;
+        notifyListeners();
+
+        // Refresh user profile in background without blocking app display
+        try {
+          _currentUser = await _authRepository.getMe().timeout(const Duration(seconds: 8));
+          notifyListeners();
+        } catch (e) {
+          // If token was rejected as unauthorized, log out cleanly
+          final errStr = e.toString().toLowerCase();
+          if (errStr.contains('401') || errStr.contains('unauthorized')) {
+            await logout();
+          }
+        }
+        return;
       } else {
         _isAuthenticated = false;
       }

@@ -55,9 +55,32 @@ class _RootScreen extends StatelessWidget {
 
     if (authVm.isLoading) {
       return const Scaffold(
+        backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryGreen,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.spa_rounded, size: 64, color: AppTheme.primaryGreen),
+              SizedBox(height: 16),
+              Text(
+                'Heathify',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ],
           ),
         ),
       );

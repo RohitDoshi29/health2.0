@@ -128,6 +128,20 @@ class _ScanViewState extends State<ScanView> {
                     color: AppTheme.textSecondary,
                   ),
                 ),
+                const SizedBox(height: 36),
+                OutlinedButton.icon(
+                  onPressed: () => scanVm.cancelAnalysis(),
+                  icon: const Icon(Icons.close, color: AppTheme.textSecondary, size: 18),
+                  label: const Text(
+                    'Cancel Analysis',
+                    style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
               ],
             ),
           ),

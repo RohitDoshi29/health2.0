@@ -125,6 +125,12 @@ class ScanViewModel extends ChangeNotifier {
     }
   }
 
+  void cancelAnalysis() {
+    _state = ScanState.initial;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   Future<bool> saveMeal() async {
     if (_editableItems.isEmpty) {
       _errorMessage = 'Please add at least one food item to save.';
