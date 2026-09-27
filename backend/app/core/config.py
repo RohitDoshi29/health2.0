@@ -31,10 +31,16 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_db_url(cls, v: str) -> str:
         """Convert standard postgres:// or postgresql:// URLs into asyncpg driver format."""
+        import re
+
         if v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql+asyncpg://", 1)
-        if v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # asyncpg does not accept 'sslmode' query param (it expects SSLContext via connect_args)
+        if "sslmode=" in v:
+            v = re.sub(r"[?&]sslmode=[^&]+", "", v)
+            v = v.rstrip("?")
         return v
 
     # --- Gemini API ---

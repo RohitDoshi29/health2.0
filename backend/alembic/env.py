@@ -43,11 +43,26 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_migrations_online() -> None:
     """Run migrations with a live async DB connection."""
+    import ssl
+    from typing import Any
+
+    connect_args: dict[str, Any] = {}
+    is_local_db = any(
+        host in settings.DATABASE_URL
+        for host in ("@localhost", "@127.0.0.1", "@db:")
+    )
+    if not is_local_db:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        connect_args["ssl"] = ctx
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
         url=settings.DATABASE_URL,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
