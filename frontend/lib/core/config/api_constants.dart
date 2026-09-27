@@ -1,12 +1,11 @@
 class ApiConstants {
-  // Configurable via --dart-define=API_URL=http://... or defaults to localhost:8000
-  // (On Android physical device, 'adb reverse tcp:8000 tcp:8000' routes localhost:8000 to the dev PC)
+  // Configurable via --dart-define=API_URL=http://... or defaults to live Render backend
   static String get baseUrl {
     const customUrl = String.fromEnvironment('API_URL');
     if (customUrl.isNotEmpty) {
       return customUrl;
     }
-    return 'http://localhost:8000';
+    return 'https://heathify-api.onrender.com';
   }
 
   static const String signup = '/api/v1/auth/signup';

@@ -43,7 +43,7 @@ class GoogleAuthService {
   })  : _googleSignIn = googleSignIn ??
             GoogleSignIn(
               serverClientId:
-                  '330089849206-r6788n43s2270e5b7q3j8qbbknr84f4p.apps.googleusercontent.com',
+                  '684483169008-p2kn11kh6c9e5gfhng2r32j1c7asapmq.apps.googleusercontent.com',
               scopes: ['email', 'profile'],
             ),
         _firebaseAuth = firebaseAuth;
