@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/services/api_client.dart';
 import '../../core/widgets/barcode_result_dialog.dart';
 import '../../core/widgets/custom_button.dart';
 import '../manual/manual_food_entry_view.dart';
@@ -26,6 +27,13 @@ class _ScanViewState extends State<ScanView> {
     {'code': '073852002029', 'title': 'Chobani Yogurt'},
     {'code': '7622210449283', 'title': 'Oreo Cookies'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Warm up backend connection in background so scan is fast
+    ApiClient().prewarm();
+  }
 
   @override
   void dispose() {
@@ -101,15 +109,27 @@ class _ScanViewState extends State<ScanView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (scanVm.imageBytes != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.memory(
+                      scanVm.imageBytes!,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 const SizedBox(
-                  width: 64,
-                  height: 64,
+                  width: 48,
+                  height: 48,
                   child: CircularProgressIndicator(
-                    strokeWidth: 4,
+                    strokeWidth: 3.5,
                     valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 const Text(
                   'Gemini AI is analyzing your food...',
                   textAlign: TextAlign.center,

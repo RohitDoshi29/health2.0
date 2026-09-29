@@ -198,22 +198,24 @@ class NutritionService:
         if food is not None:
             return food
 
-        # Tier 3: Fuzzy matching fallback across database foods
-        all_foods_res = await self.db.execute(select(Food))
-        all_foods = list(all_foods_res.scalars().all())
-        if not all_foods:
-            return None
+        # Tier 3: Fuzzy matching fallback across database foods (cached per service instance)
+        if getattr(self, "_cached_choices", None) is None:
+            all_foods_res = await self.db.execute(select(Food))
+            all_foods = list(all_foods_res.scalars().all())
+            choices: dict[str, Food] = {}
+            for f in all_foods:
+                choices[f.name.lower()] = f
+                choices[f.canonical_name.replace("_", " ").lower()] = f
+                choices[f.canonical_name.lower()] = f
+                for syn, syn_canonical in _SYNONYMS.items():
+                    if syn_canonical == f.canonical_name:
+                        choices[syn.lower()] = f
+            self._cached_choices = choices
+        else:
+            choices = self._cached_choices
 
-        # Build candidate search dictionary mapping name variations to Food entities
-        choices: dict[str, Food] = {}
-        for f in all_foods:
-            choices[f.name.lower()] = f
-            choices[f.canonical_name.replace("_", " ").lower()] = f
-            choices[f.canonical_name.lower()] = f
-            # Include synonym phrases that point to this canonical name
-            for syn, syn_canonical in _SYNONYMS.items():
-                if syn_canonical == f.canonical_name:
-                    choices[syn.lower()] = f
+        if not choices:
+            return None
 
         query_lower = query_raw.lower()
         match = process.extractOne(

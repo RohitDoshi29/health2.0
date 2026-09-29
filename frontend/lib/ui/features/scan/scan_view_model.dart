@@ -96,7 +96,12 @@ class ScanViewModel extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      final file = await _picker.pickImage(source: source, imageQuality: 85);
+      final file = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
       if (file == null) {
         _state = ScanState.initial;
         notifyListeners();

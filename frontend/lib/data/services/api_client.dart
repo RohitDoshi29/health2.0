@@ -29,6 +29,16 @@ class ApiClient {
   })  : _tokenStorage = tokenStorage ?? TokenStorage(),
         _client = client ?? http.Client();
 
+  /// Pre-warms the backend (e.g., Render free tier) with a lightweight, best-effort ping.
+  Future<void> prewarm() async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/health');
+      await _client.get(uri).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Ignored - best-effort background wakeup
+    }
+  }
+
   Future<Map<String, String>> _getHeaders({bool isJson = true}) async {
     final headers = <String, String>{};
     if (isJson) {
@@ -209,4 +219,3 @@ class ApiClient {
     throw ApiException(response.statusCode, errorDetail);
   }
 }
-

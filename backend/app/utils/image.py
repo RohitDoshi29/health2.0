@@ -102,7 +102,7 @@ async def validate_and_read_image(upload: UploadFile) -> ValidatedImage:
 
 
 def resize_if_needed(
-    image: ValidatedImage, max_dimension_px: int = 1600, quality: int = 85
+    image: ValidatedImage, max_dimension_px: int = 1024, quality: int = 80
 ) -> ValidatedImage:
     """Downscale images exceeding max_dimension_px and compress JPEG/WEBP/PNG output.
 
@@ -118,7 +118,7 @@ def resize_if_needed(
 
             if needs_downscale:
                 pil_img.thumbnail(
-                    (max_dimension_px, max_dimension_px), Image.Resampling.LANCZOS
+                    (max_dimension_px, max_dimension_px), Image.Resampling.BICUBIC
                 )
 
             out_io = io.BytesIO()
