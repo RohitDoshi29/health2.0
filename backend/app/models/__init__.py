@@ -10,7 +10,17 @@ from app.models.goal import Goal
 from app.models.meal import Meal
 from app.models.meal_item import MealItem
 from app.models.user import User
+from app.models.user_profile import UserProfile
 from app.models.water_log import WaterLog
 
-__all__ = ["User", "Food", "Meal", "MealItem", "Goal", "FavoriteMeal", "WaterLog"]
+__all__ = [
+    "User",
+    "UserProfile",
+    "Food",
+    "Meal",
+    "MealItem",
+    "Goal",
+    "FavoriteMeal",
+    "WaterLog",
+]
 

@@ -7,7 +7,7 @@ app/core/security.py). This model only stores basic profile data.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -50,6 +50,11 @@ class User(Base):
     water_logs: Mapped[list["WaterLog"]] = relationship(  # noqa: F821
         "WaterLog", back_populates="user", cascade="all, delete-orphan"
     )
+    profile: Mapped["UserProfile | None"] = relationship(  # noqa: F821
+        "UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+
+    onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User id={self.id} email={self.email!r}>"

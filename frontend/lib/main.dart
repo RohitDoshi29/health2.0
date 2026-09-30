@@ -8,6 +8,8 @@ import 'ui/features/auth/auth_view_model.dart';
 import 'ui/features/auth/login_view.dart';
 import 'ui/features/home/home_view.dart';
 import 'ui/features/home/home_view_model.dart';
+import 'ui/features/onboarding/onboarding_view.dart';
+import 'ui/features/onboarding/onboarding_view_model.dart';
 import 'ui/features/scan/scan_view_model.dart';
 import 'ui/features/water/water_view_model.dart';
 
@@ -32,6 +34,7 @@ class HeathifyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SyncManager()..init()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()..checkAuthStatus()),
+        ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => ScanViewModel()),
         ChangeNotifierProvider(create: (_) => WaterViewModel()..loadTodaySummary()),
@@ -87,6 +90,9 @@ class _RootScreen extends StatelessWidget {
     }
 
     if (authVm.isAuthenticated) {
+      if (authVm.currentUser != null && !authVm.currentUser!.onboardingCompleted) {
+        return const OnboardingView();
+      }
       return const HomeView();
     }
 

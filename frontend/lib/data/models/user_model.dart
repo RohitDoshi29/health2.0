@@ -4,6 +4,7 @@ class UserModel {
   final String email;
   final String authProvider;
   final String? avatarUrl;
+  final bool onboardingCompleted;
   final DateTime createdAt;
 
   UserModel({
@@ -12,6 +13,7 @@ class UserModel {
     required this.email,
     this.authProvider = 'email',
     this.avatarUrl,
+    this.onboardingCompleted = false,
     required this.createdAt,
   });
 
@@ -22,6 +24,7 @@ class UserModel {
       email: json['email'] as String,
       authProvider: json['auth_provider'] as String? ?? 'email',
       avatarUrl: json['avatar_url'] as String?,
+      onboardingCompleted: json['onboarding_completed'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -35,6 +38,7 @@ class UserModel {
       'email': email,
       'auth_provider': authProvider,
       'avatar_url': avatarUrl,
+      'onboarding_completed': onboardingCompleted,
       'created_at': createdAt.toIso8601String(),
     };
   }

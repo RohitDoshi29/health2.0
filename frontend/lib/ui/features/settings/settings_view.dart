@@ -6,6 +6,7 @@ import '../../../data/services/local_storage_service.dart';
 import '../../../data/services/sync_manager.dart';
 import '../auth/auth_view_model.dart';
 import '../home/home_view_model.dart';
+import '../onboarding/onboarding_view.dart';
 import '../water/water_view_model.dart';
 import 'info_view.dart';
 
@@ -320,6 +321,21 @@ class _SettingsViewState extends State<SettingsView> {
                   title: 'Daily Hydration Target',
                   subtitle: '${(goal?.waterTargetMl ?? waterVm.summary.targetMl).toStringAsFixed(0)} ml',
                   onTap: () => _showEditGoalsSheet(context, homeVm, waterVm),
+                ),
+                const Divider(height: 1, indent: 56, color: Color(0xFFF3F4F6)),
+                _buildSettingTile(
+                  icon: Icons.calculate_outlined,
+                  iconColor: AppTheme.primaryDark,
+                  title: 'Recalculate Targets',
+                  subtitle: 'Use biometric calculator for BMR & TDEE',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OnboardingView(isRecalculate: true),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

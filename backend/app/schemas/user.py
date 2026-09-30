@@ -38,6 +38,7 @@ class UserRead(UserBase):
     firebase_uid: str | None = None
     created_at: datetime
     updated_at: datetime
+    onboarding_completed: bool = False
 
 
 class GoogleAuthRequest(BaseModel):

@@ -25,6 +25,8 @@ class ApiConstants {
   static const String waterToday = '/api/v1/water/today';
   static const String waterHistory = '/api/v1/water/history';
   static const String waterGoal = '/api/v1/water/goal';
+  static const String profile = '/api/v1/users/me/profile';
+  static const String profilePreview = '/api/v1/users/me/profile/preview';
 }
 
 
