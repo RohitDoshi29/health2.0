@@ -6,8 +6,10 @@ import '../../core/widgets/nutrition_trends_chart.dart';
 import '../../core/widgets/favorites_sheet.dart';
 import '../../core/widgets/water_tracker_card.dart';
 import '../../core/widgets/weight_tracker_card.dart';
+import '../../core/widgets/daily_score_card.dart';
 import '../../../data/services/sync_manager.dart';
 import '../auth/auth_view_model.dart';
+import '../streak/streak_view_model.dart';
 import '../history/history_view.dart';
 import '../manual/manual_food_entry_view.dart';
 import '../scan/scan_view.dart';
@@ -30,6 +32,9 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().loadMeals();
+      try {
+        Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
+      } catch (_) {}
     });
   }
 
@@ -53,6 +58,9 @@ class _HomeViewState extends State<HomeView> {
           });
           if (index == 2 || index == 3) {
             context.read<HomeViewModel>().loadMeals();
+            try {
+              Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
+            } catch (_) {}
           }
         },
         destinations: const [
@@ -238,6 +246,7 @@ class _DashboardTab extends StatelessWidget {
     final homeVm = context.watch<HomeViewModel>();
     final authVm = context.watch<AuthViewModel>();
     final syncMgr = context.watch<SyncManager>();
+    final streakVm = Provider.of<StreakViewModel?>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -274,7 +283,14 @@ class _DashboardTab extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => homeVm.loadMeals(),
+        onRefresh: () async {
+          await homeVm.loadMeals();
+          if (context.mounted) {
+            try {
+              await Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
+            } catch (_) {}
+          }
+        },
         color: AppTheme.primaryGreen,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -334,20 +350,63 @@ class _DashboardTab extends StatelessWidget {
                 ),
               ],
 
-              // User Greeting
-              Text(
-                'Hello, ${authVm.currentUser?.name.split(" ").first ?? "Friend"} 👋',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
+              // User Greeting & Streak Flame Chip
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hello, ${authVm.currentUser?.name.split(" ").first ?? "Friend"} 👋',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Here is your nutrition summary for today",
+                          style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (streakVm != null) ...[
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFED7AA)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🔥', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${streakVm.currentStreak} day${streakVm.currentStreak == 1 ? "" : "s"}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Color(0xFFC2410C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 4),
-              const Text(
-                "Here is your nutrition summary for today",
-                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-              ),
+              const SizedBox(height: 16),
+
+              // Daily Health Score Ring Card
+              const DailyScoreCard(),
               const SizedBox(height: 20),
 
               // Daily Macro Progress & Ring Card

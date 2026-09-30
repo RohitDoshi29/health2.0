@@ -13,6 +13,7 @@ import 'package:heathify_app/ui/features/settings/info_view.dart';
 import 'package:heathify_app/ui/features/settings/settings_view.dart';
 import 'package:heathify_app/ui/features/water/water_view_model.dart';
 import 'package:heathify_app/ui/features/weight/weight_view_model.dart';
+import 'package:heathify_app/ui/features/streak/streak_view_model.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -176,6 +177,7 @@ void main() {
             ChangeNotifierProvider(create: (_) => AuthViewModel()),
             ChangeNotifierProvider(create: (_) => HomeViewModel()),
             ChangeNotifierProvider(create: (_) => WaterViewModel()),
+            ChangeNotifierProvider(create: (_) => StreakViewModel()),
             ChangeNotifierProvider(create: (_) => SyncManager()),
           ],
           child: const MaterialApp(
@@ -206,6 +208,7 @@ void main() {
             ChangeNotifierProvider(create: (_) => HomeViewModel()),
             ChangeNotifierProvider(create: (_) => WaterViewModel()),
             ChangeNotifierProvider(create: (_) => WeightViewModel()),
+            ChangeNotifierProvider(create: (_) => StreakViewModel()),
             ChangeNotifierProvider(create: (_) => SyncManager()),
           ],
           child: const MaterialApp(

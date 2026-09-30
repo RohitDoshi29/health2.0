@@ -17,6 +17,8 @@ from app.schemas.goal import (
     GoalUpdate,
     TrendsAnalyticsRead,
 )
+from app.schemas.streak import StreaksResponse
+from app.services.streak_service import StreakService
 
 router = APIRouter(tags=["goals & analytics"])
 
@@ -253,5 +255,18 @@ async def get_trends_analytics(
         goal=goal_read,
         data_points=data_points,
     )
+
+
+@router.get("/analytics/streaks", response_model=StreaksResponse)
+async def get_streaks_and_badges(
+    tz_offset: int = Query(
+        default=0, description="Timezone offset in minutes from UTC (e.g. 330 for IST UTC+5:30)"
+    ),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreaksResponse:
+    """Calculate the user's current streak, longest streak, daily score with breakdown, and badges."""
+    service = StreakService(db)
+    return await service.get_user_streaks_and_badges(current_user.id, tz_offset=tz_offset)
 
 

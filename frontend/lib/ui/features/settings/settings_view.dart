@@ -8,6 +8,7 @@ import '../auth/auth_view_model.dart';
 import '../home/home_view_model.dart';
 import '../onboarding/onboarding_view.dart';
 import '../water/water_view_model.dart';
+import '../../core/widgets/badges_section.dart';
 import 'info_view.dart';
 
 class SettingsView extends StatefulWidget {
@@ -277,6 +278,10 @@ class _SettingsViewState extends State<SettingsView> {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Achievements & Badges Section
+          const BadgesSection(),
           const SizedBox(height: 24),
 
           // Section 1: Nutrition & Hydration Goals

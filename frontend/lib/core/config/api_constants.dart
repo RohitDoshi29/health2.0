@@ -29,6 +29,7 @@ class ApiConstants {
   static const String profilePreview = '/api/v1/users/me/profile/preview';
   static const String weight = '/api/v1/weight';
   static const String weightHistory = '/api/v1/weight/history';
+  static const String streaks = '/api/v1/analytics/streaks';
 }
 
 
