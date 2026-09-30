@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/analysis_model.dart';
+import '../../../data/models/portion_model.dart';
 import '../../../data/models/recent_food_model.dart';
 import '../../../data/repositories/favorite_repository.dart';
 import '../../../data/repositories/meal_repository.dart';
@@ -9,6 +10,7 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/image_bounding_box_overlay.dart';
 import '../../core/widgets/macro_card.dart';
 import '../home/home_view_model.dart';
+import '../portion/portion_picker_widget.dart';
 import 'scan_view_model.dart';
 
 class AnalysisReviewView extends StatefulWidget {
@@ -118,6 +120,116 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
               child: const Text('Save Template'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showPortionEditSheet(BuildContext context, ScanViewModel scanVm, int itemIndex) async {
+    final item = scanVm.editableItems[itemIndex];
+    final repo = MealRepository();
+    List<PortionGuideModel> fetchedPortions = [];
+    try {
+      fetchedPortions = await repo.searchPortions(query: item.name);
+    } catch (_) {}
+
+    if (!context.mounted) return;
+
+    double selectedGrams = item.quantity;
+    String selectedUnit = item.unit;
+    double refCaloriesPer100g = item.quantity > 0
+        ? (item.estimatedCalories / item.quantity) * 100.0
+        : 150.0;
+    if (refCaloriesPer100g <= 0) refCaloriesPer100g = 150.0;
+    double selectedCalories = item.estimatedCalories;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Adjust Portion: ${item.name}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(sheetCtx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  PortionPickerWidget(
+                    portions: fetchedPortions,
+                    initialMultiplier: 1.0,
+                    referenceCaloriesPer100g: refCaloriesPer100g,
+                    onPortionChanged: (portion, mult, totalGrams, totalCals) {
+                      setSheetState(() {
+                        selectedGrams = totalGrams;
+                        selectedUnit = portion.label.replaceAll(RegExp(r'^\d+\s*'), '');
+                        selectedCalories = totalCals;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      final ratio = item.quantity > 0 ? selectedGrams / item.quantity : 1.0;
+                      scanVm.updateItemPortion(
+                        itemIndex,
+                        newQuantity: selectedGrams,
+                        newUnit: selectedUnit,
+                        newCalories: selectedCalories,
+                        newProtein: (item.protein * ratio).clamp(0.0, 999.0),
+                        newCarbs: (item.carbohydrates * ratio).clamp(0.0, 999.0),
+                        newFat: (item.fat * ratio).clamp(0.0, 999.0),
+                        newFiber: (item.fiber * ratio).clamp(0.0, 999.0),
+                      );
+                      Navigator.pop(sheetCtx);
+                    },
+                    child: Text(
+                      'Apply Portion (${selectedGrams.toStringAsFixed(0)} g • ${selectedCalories.toStringAsFixed(0)} kcal)',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -418,6 +530,12 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                                           color: AppTheme.primaryGreen,
                                           onPressed: () => scanVm.updateItemQuantity(
                                               index, item.quantity + 10),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.tune_rounded, size: 19),
+                                          tooltip: 'Portion Guide',
+                                          color: AppTheme.primaryGreen,
+                                          onPressed: () => _showPortionEditSheet(context, scanVm, index),
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.delete_outline, size: 20),

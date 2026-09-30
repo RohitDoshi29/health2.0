@@ -3,6 +3,7 @@ import '../../core/config/api_constants.dart';
 import '../models/analysis_model.dart';
 import '../models/meal_model.dart';
 import '../models/nutrition_model.dart';
+import '../models/portion_model.dart';
 import '../models/recent_food_model.dart';
 import '../services/api_client.dart';
 import '../services/local_storage_service.dart';
@@ -199,5 +200,37 @@ class MealRepository {
 
     return meal;
   }
+
+  Future<List<PortionGuideModel>> getPortionsForFood(String foodId) async {
+    try {
+      final response = await _apiClient.get(ApiConstants.foodPortions(foodId));
+      if (response is List) {
+        return response
+            .map((item) => PortionGuideModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<PortionGuideModel>> searchPortions({String? query}) async {
+    try {
+      final uri = (query != null && query.trim().isNotEmpty)
+          ? '${ApiConstants.portions}?q=${Uri.encodeComponent(query.trim())}'
+          : ApiConstants.portions;
+      final response = await _apiClient.get(uri);
+      if (response is List) {
+        return response
+            .map((item) => PortionGuideModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
 }
+
 

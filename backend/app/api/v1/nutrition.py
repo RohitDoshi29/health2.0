@@ -6,12 +6,28 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.user import User
 from app.schemas.barcode import BarcodeProductRead
 from app.schemas.nutrition import FoodRead
+from app.schemas.portion import PortionGuideRead
 from app.services.barcode_service import BarcodeService, BarcodeServiceError
 from app.services.nutrition_service import NutritionService
+from app.services.portion_service import PortionService
 
 router = APIRouter(prefix="/nutrition", tags=["nutrition"])
+
+
+@router.get("/portions", response_model=list[PortionGuideRead])
+async def search_portions(
+    q: str | None = Query(default=None, description="Search term, e.g. 'dal' or 'katori'"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[PortionGuideRead]:
+    """Search available portion guides by food canonical name or label."""
+    service = PortionService(db)
+    portions = await service.search_portions(q)
+    return [PortionGuideRead.model_validate(p) for p in portions]
 
 
 @router.get("/foods", response_model=list[FoodRead])
@@ -42,6 +58,20 @@ async def get_food(food_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Fo
     if food is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found.")
     return FoodRead.model_validate(food)
+
+
+@router.get("/foods/{food_id}/portions", response_model=list[PortionGuideRead])
+async def get_food_portions(
+    food_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[PortionGuideRead]:
+    """Retrieve portion guides for a specific food item."""
+    service = PortionService(db)
+    portions = await service.get_portions_for_food(food_id)
+    if portions is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food not found.")
+    return [PortionGuideRead.model_validate(p) for p in portions]
 
 
 @router.get("/barcode/{barcode}", response_model=BarcodeProductRead)

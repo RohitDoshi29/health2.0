@@ -65,14 +65,44 @@ class ScanViewModel extends ChangeNotifier {
   void updateItemQuantity(int index, double newQuantity) {
     if (index >= 0 && index < _editableItems.length && newQuantity > 0) {
       final item = _editableItems[index];
-      final ratio = item.quantity > 0 ? newQuantity / item.quantity : 1.0;
+      final cappedQuantity = newQuantity > 1200.0 ? 1200.0 : newQuantity;
+      final ratio = item.quantity > 0 ? cappedQuantity / item.quantity : 1.0;
 
-      item.quantity = newQuantity;
+      item.quantity = cappedQuantity;
       item.estimatedCalories = (item.estimatedCalories * ratio).roundToDouble();
       item.protein = double.parse((item.protein * ratio).toStringAsFixed(2));
       item.carbohydrates = double.parse((item.carbohydrates * ratio).toStringAsFixed(2));
       item.fat = double.parse((item.fat * ratio).toStringAsFixed(2));
       item.fiber = double.parse((item.fiber * ratio).toStringAsFixed(2));
+
+      notifyListeners();
+    }
+  }
+
+  void updateItemPortion(
+    int index, {
+    required double newQuantity,
+    String? newUnit,
+    double? newCalories,
+    double? newProtein,
+    double? newCarbs,
+    double? newFat,
+    double? newFiber,
+  }) {
+    if (index >= 0 && index < _editableItems.length && newQuantity > 0) {
+      final item = _editableItems[index];
+      final cappedQuantity = newQuantity > 1200.0 ? 1200.0 : newQuantity;
+      final ratio = item.quantity > 0 ? cappedQuantity / item.quantity : 1.0;
+
+      item.quantity = cappedQuantity;
+      if (newUnit != null) {
+        item.unit = newUnit;
+      }
+      item.estimatedCalories = (newCalories ?? (item.estimatedCalories * ratio)).roundToDouble();
+      item.protein = double.parse((newProtein ?? (item.protein * ratio)).toStringAsFixed(2));
+      item.carbohydrates = double.parse((newCarbs ?? (item.carbohydrates * ratio)).toStringAsFixed(2));
+      item.fat = double.parse((newFat ?? (item.fat * ratio)).toStringAsFixed(2));
+      item.fiber = double.parse((newFiber ?? (item.fiber * ratio)).toStringAsFixed(2));
 
       notifyListeners();
     }

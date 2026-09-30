@@ -33,6 +33,8 @@ class ApiConstants {
   static const String weeklyReport = '/api/v1/analytics/weekly';
   static const String recentFoods = '/api/v1/meals/recent-foods';
   static String relogMeal(String id) => '/api/v1/meals/$id/relog';
+  static const String portions = '/api/v1/nutrition/portions';
+  static String foodPortions(String id) => '/api/v1/nutrition/foods/$id/portions';
 }
 
 

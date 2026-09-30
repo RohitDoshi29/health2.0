@@ -321,3 +321,15 @@ flowchart TD
    - Validated with `flutter test` and `flutter analyze`.
 4. **Documentation**:
    - Updated README section with endpoints, payloads, response samples, assumptions, and required manual steps (e.g. running `alembic upgrade head`).
+
+---
+
+## Status Summary
+
+- [x] **Feature 1: Onboarding Calculator** (100% Complete & Tested)
+- [x] **Feature 2: Weight Tracking** (100% Complete & Tested)
+- [x] **Feature 3: Streaks and Daily Score** (100% Complete & Tested)
+- [x] **Feature 4: Weekly Report** (100% Complete & Tested)
+- [x] **Feature 5: Recent Foods and Log Again** (100% Complete & Tested)
+- [x] **Feature 6: Portion Guides** (100% Complete & Tested)
+

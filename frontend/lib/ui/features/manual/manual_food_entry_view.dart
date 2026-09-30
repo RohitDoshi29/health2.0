@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/analysis_model.dart';
 import '../../../data/models/nutrition_model.dart';
+import '../../../data/models/portion_model.dart';
 import '../../../data/models/recent_food_model.dart';
 import '../../../data/repositories/favorite_repository.dart';
 import '../../../data/repositories/meal_repository.dart';
 import '../../core/widgets/custom_button.dart';
 import '../home/home_view_model.dart';
+import '../portion/portion_picker_widget.dart';
 
 class ManualFoodEntryView extends StatefulWidget {
   final MealRepository? mealRepository;
@@ -44,6 +46,11 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
   final List<String> _units = [
     'g',
     'ml',
+    'katori',
+    'roti',
+    'idli',
+    'dosa',
+    'glass',
     'piece',
     'cup',
     'tbsp',
@@ -53,6 +60,14 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
     'serving',
     'plate',
   ];
+
+  // Portion guides
+  List<PortionGuideModel> _availablePortions = [];
+  double _baseCaloriesPer100g = 0.0;
+  double _baseProteinPer100g = 0.0;
+  double _baseCarbsPer100g = 0.0;
+  double _baseFatPer100g = 0.0;
+  double _baseFiberPer100g = 0.0;
 
   // Search catalog state
   final _searchController = TextEditingController();
@@ -86,7 +101,7 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
     } catch (_) {}
   }
 
-  void _selectRecentFood(RecentFoodModel food) {
+  void _selectRecentFood(RecentFoodModel food) async {
     setState(() {
       _nameController.text = food.foodName;
       _quantityController.text = food.quantity.toStringAsFixed(0);
@@ -96,7 +111,22 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
       _carbsController.text = food.carbohydrates.toStringAsFixed(1);
       _fatController.text = food.fat.toStringAsFixed(1);
       _fiberController.text = food.fiber.toStringAsFixed(1);
+
+      if (food.quantity > 0) {
+        _baseCaloriesPer100g = (food.calories / food.quantity) * 100.0;
+        _baseProteinPer100g = (food.protein / food.quantity) * 100.0;
+        _baseCarbsPer100g = (food.carbohydrates / food.quantity) * 100.0;
+        _baseFatPer100g = (food.fat / food.quantity) * 100.0;
+        _baseFiberPer100g = (food.fiber / food.quantity) * 100.0;
+      }
     });
+
+    try {
+      final portions = await _mealRepo.searchPortions(query: food.foodName);
+      if (mounted && portions.isNotEmpty) {
+        setState(() => _availablePortions = portions);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -135,7 +165,8 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
     });
   }
 
-  void _selectCatalogFood(FoodItemModel food) {
+  void _selectCatalogFood(FoodItemModel food) async {
+    final size = food.servingSize > 0 ? food.servingSize : 100.0;
     setState(() {
       _nameController.text = food.name;
       _quantityController.text = food.servingSize.toStringAsFixed(0);
@@ -147,7 +178,20 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
       _fiberController.text = food.fiber.toStringAsFixed(1);
       _searchResults = [];
       _searchController.clear();
+
+      _baseCaloriesPer100g = (food.calories / size) * 100.0;
+      _baseProteinPer100g = (food.protein / size) * 100.0;
+      _baseCarbsPer100g = (food.carbohydrates / size) * 100.0;
+      _baseFatPer100g = (food.fat / size) * 100.0;
+      _baseFiberPer100g = (food.fiber / size) * 100.0;
     });
+
+    try {
+      final portions = await _mealRepo.getPortionsForFood(food.id);
+      if (mounted && portions.isNotEmpty) {
+        setState(() => _availablePortions = portions);
+      }
+    } catch (_) {}
   }
 
   void _addItemToStaged() {
@@ -624,6 +668,28 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
               prefixIcon: const Icon(Icons.restaurant_menu, color: AppTheme.primaryDark),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
+          ),
+          const SizedBox(height: 14),
+
+          // Portion Guide Picker & Stepper
+          PortionPickerWidget(
+            portions: _availablePortions,
+            initialMultiplier: 1.0,
+            referenceCaloriesPer100g: _baseCaloriesPer100g > 0 ? _baseCaloriesPer100g : 150.0,
+            onPortionChanged: (portion, mult, totalGrams, totalCals) {
+              setState(() {
+                _quantityController.text = totalGrams.toStringAsFixed(0);
+                _selectedUnit = 'g';
+                if (_baseCaloriesPer100g > 0) {
+                  _caloriesController.text = totalCals.toStringAsFixed(0);
+                  final ratio = totalGrams / 100.0;
+                  _proteinController.text = (_baseProteinPer100g * ratio).toStringAsFixed(1);
+                  _carbsController.text = (_baseCarbsPer100g * ratio).toStringAsFixed(1);
+                  _fatController.text = (_baseFatPer100g * ratio).toStringAsFixed(1);
+                  _fiberController.text = (_baseFiberPer100g * ratio).toStringAsFixed(1);
+                }
+              });
+            },
           ),
           const SizedBox(height: 14),
 

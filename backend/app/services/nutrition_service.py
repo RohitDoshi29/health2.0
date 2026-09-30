@@ -219,14 +219,77 @@ def normalize_food_name(name: str) -> str:
     return re.sub(r"\s+", "_", cleaned)
 
 
+# Reference per-food portion weights (in grams) for common culinary units.
+_PER_FOOD_PORTIONS_GRAMS: dict[tuple[str, str], float] = {
+    # Dal & curries
+    ("dal", "katori"): 150.0,
+    ("curd", "katori"): 150.0,
+    ("curd", "bowl"): 150.0,
+    ("curd", "cup"): 150.0,
+    # Rice
+    ("cooked_white_rice", "katori"): 150.0,
+    ("cooked_white_rice", "plate"): 250.0,
+    ("white_rice", "katori"): 150.0,
+    ("rice", "katori"): 150.0,
+    # Breads
+    ("roti", "piece"): 40.0,
+    ("roti", "roti"): 40.0,
+    ("roti", "chapati"): 40.0,
+    ("chapati", "piece"): 40.0,
+    ("chapati", "roti"): 40.0,
+    ("chapati", "chapati"): 40.0,
+    ("paratha", "piece"): 80.0,
+    ("paratha", "paratha"): 80.0,
+    ("naan_bread", "piece"): 90.0,
+    ("bread", "slice"): 35.0,
+    # Pizza
+    ("cheese_pizza", "slice"): 115.0,
+    ("pepperoni_pizza", "slice"): 120.0,
+    ("pizza", "slice"): 100.0,
+    # South Indian
+    ("idli", "piece"): 50.0,
+    ("idli", "idli"): 50.0,
+    ("dosa", "piece"): 100.0,
+    ("dosa", "dosa"): 100.0,
+    # Eggs & dairy
+    ("egg", "piece"): 50.0,
+    ("egg", "egg"): 50.0,
+    ("boiled_egg", "piece"): 50.0,
+    ("fried_egg", "piece"): 50.0,
+    ("paneer", "cube"): 15.0,
+    ("paneer", "piece"): 15.0,
+    ("ghee", "tbsp"): 15.0,
+    ("ghee", "tablespoon"): 15.0,
+    ("ghee", "tsp"): 5.0,
+    ("ghee", "teaspoon"): 5.0,
+    # Beverages
+    ("milk", "glass"): 240.0,
+    ("milk", "cup"): 240.0,
+    ("coffee", "cup"): 240.0,
+    ("tea", "cup"): 150.0,
+    # Snacks & entrees
+    ("samosa", "piece"): 75.0,
+    ("samosa", "samosa"): 75.0,
+    ("cheeseburger", "burger"): 180.0,
+    ("cheeseburger", "piece"): 180.0,
+    ("cooked_chicken", "piece"): 150.0,
+    ("chicken", "piece"): 150.0,
+    ("salad", "bowl"): 120.0,
+    ("soup", "bowl"): 240.0,
+}
+
+
 def convert_quantity_to_grams(food: Food | None, quantity: float, unit: str) -> float:
     """Convert an arbitrary quantity & unit into standard serving grams.
 
     Priority:
     1. Explicit metric weight/volume (g, ml, kg, oz)
-    2. Food-specific portion weights (_SLICE_WEIGHTS_GRAMS, _PIECE_WEIGHTS_GRAMS, etc.)
+    2. Food-specific portion weights (_PER_FOOD_PORTIONS_GRAMS, _SLICE_WEIGHTS_GRAMS, etc.)
     3. Food database serving size (if serving_unit aligns)
-    4. Conservative generic fallback
+    4. Conservative generic fallback (katori=150g, roti=40g, idli=50g, dosa=100g, etc.)
+
+    Physical Sanity:
+    - Any single item is capped at 1,200 g to prevent unrealistic runaway calorie explosions.
     """
     if quantity <= 0.0:
         return 0.0
@@ -234,67 +297,87 @@ def convert_quantity_to_grams(food: Food | None, quantity: float, unit: str) -> 
     unit_clean = unit.strip().lower()
 
     if unit_clean in ("g", "gram", "grams", "ml", "milliliter", "milliliters"):
-        return quantity
+        return round(min(quantity, 1200.0), 2)
 
     if unit_clean in ("kg", "kilogram", "kilograms"):
-        return quantity * 1000.0
+        return round(min(quantity * 1000.0, 1200.0), 2)
 
     if unit_clean in ("oz", "ounce", "ounces"):
-        return quantity * 28.3495
+        return round(min(quantity * 28.3495, 1200.0), 2)
 
     canonical = food.canonical_name.lower() if food else ""
     food_name = food.name.lower() if food else ""
 
+    # Check high-priority food-specific portion guide dictionary
+    for (f_key, u_key), p_grams in _PER_FOOD_PORTIONS_GRAMS.items():
+        if (f_key == canonical or f_key in canonical or f_key in food_name) and (
+            u_key == unit_clean or u_key in unit_clean
+        ):
+            return round(min(quantity * p_grams, 1200.0), 2)
+
+    # Specific Indian culinary units fallback
+    if unit_clean in ("katori", "katoris"):
+        return round(min(quantity * 150.0, 1200.0), 2)
+
+    if unit_clean in ("roti", "rotis", "chapati", "chapatis"):
+        return round(min(quantity * 40.0, 1200.0), 2)
+
+    if unit_clean in ("idli", "idlis"):
+        return round(min(quantity * 50.0, 1200.0), 2)
+
+    if unit_clean in ("dosa", "dosas"):
+        return round(min(quantity * 100.0, 1200.0), 2)
+
+    if unit_clean in ("glass", "glasses"):
+        return round(min(quantity * 240.0, 1200.0), 2)
+
     if unit_clean in ("slice", "slices"):
         for key, weight in _SLICE_WEIGHTS_GRAMS.items():
             if key in canonical or key in food_name:
-                return quantity * weight
-        return quantity * 35.0
+                return round(min(quantity * weight, 1200.0), 2)
+        return round(min(quantity * 35.0, 1200.0), 2)
 
     if unit_clean in ("piece", "pieces", "item", "items", "whole"):
         if canonical in _PIECE_WEIGHTS_GRAMS:
-            return quantity * _PIECE_WEIGHTS_GRAMS[canonical]
+            return round(min(quantity * _PIECE_WEIGHTS_GRAMS[canonical], 1200.0), 2)
         for key, weight in _PIECE_WEIGHTS_GRAMS.items():
             if key in canonical or key in food_name:
-                return quantity * weight
+                return round(min(quantity * weight, 1200.0), 2)
         # If food explicitly specifies per-piece serving unit
         if food and food.serving_unit.lower() in ("piece", "item", "whole"):
-            return quantity * (food.serving_size or 50.0)
+            return round(min(quantity * (food.serving_size or 50.0), 1200.0), 2)
         # Safe fallback when serving size is from standard 100g table:
-        # Never treat 1 piece as 100g unless it is a whole fruit/entree!
         if food and food.serving_size:
-            return quantity * min(food.serving_size, 50.0)
-        return quantity * 50.0
+            return round(min(quantity * min(food.serving_size, 50.0), 1200.0), 2)
+        return round(min(quantity * 50.0, 1200.0), 2)
 
     if unit_clean in ("bowl", "bowls"):
         for key, weight in _BOWL_WEIGHTS_GRAMS.items():
             if key in canonical or key in food_name:
-                return quantity * weight
-        return quantity * 350.0
+                return round(min(quantity * weight, 1200.0), 2)
+        return round(min(quantity * 350.0, 1200.0), 2)
 
     if unit_clean in ("cup", "cups"):
-        return quantity * 240.0
+        return round(min(quantity * 240.0, 1200.0), 2)
 
     if unit_clean in ("tbsp", "tablespoon", "tablespoons"):
-        return quantity * 15.0
+        return round(min(quantity * 15.0, 1200.0), 2)
 
     if unit_clean in ("tsp", "teaspoon", "teaspoons"):
-        return quantity * 5.0
+        return round(min(quantity * 5.0, 1200.0), 2)
 
     if unit_clean in ("plate", "plates"):
         for key, weight in _PLATE_WEIGHTS_GRAMS.items():
             if key in canonical or key in food_name:
-                return quantity * weight
-        return quantity * 350.0
+                return round(min(quantity * weight, 1200.0), 2)
+        return round(min(quantity * 350.0, 1200.0), 2)
 
     if unit_clean in ("serving", "servings"):
-        return quantity * (food.serving_size if food and food.serving_size else 100.0)
+        serving = food.serving_size if food and food.serving_size else 100.0
+        return round(min(quantity * serving, 1200.0), 2)
 
-    if unit_clean in ("glass", "glasses"):
-        return quantity * 250.0
-
-    # Unrecognized unit fallback
-    return quantity
+    # Unrecognized unit fallback: treat raw quantity as grams, capped at 1200g
+    return round(min(quantity, 1200.0), 2)
 
 
 @dataclass
