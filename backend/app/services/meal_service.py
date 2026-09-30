@@ -14,6 +14,8 @@ import hashlib
 import logging
 import uuid
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +28,7 @@ from app.schemas.analysis import (
     MealAnalysisResponse,
     MealItemAnalysis,
 )
-from app.schemas.meal import MealCreate, MealUpdate
+from app.schemas.meal import MealCreate, MealUpdate, RecentFoodRead
 from app.schemas.nutrition import NutritionSummary
 from app.schemas.verification import VerificationStatus
 from app.services.calorie_verification_service import (
@@ -96,6 +98,24 @@ COMPOSITE_DISH_COMPONENTS: dict[str, set[str]] = {
         "tortilla", "rice", "beans", "black beans", "meat", "cheese", "salsa",
     },
 }
+
+
+def map_hour_to_meal_type(hour: int) -> str:
+    """Map a 0-23 hour of the day to a meal type.
+
+    breakfast: < 11
+    lunch: 11-16 (11 <= hour < 16)
+    dinner: 16-22 (16 <= hour < 22)
+    snack: otherwise (>= 22)
+    """
+    if hour < 11:
+        return "breakfast"
+    elif 11 <= hour < 16:
+        return "lunch"
+    elif 16 <= hour < 22:
+        return "dinner"
+    else:
+        return "snack"
 
 
 class MealServiceError(Exception):
@@ -393,3 +413,90 @@ class MealService:
         meal = await self.get_meal(meal_id, user_id=user_id)
         await self.db.delete(meal)
         await self.db.commit()
+
+    async def get_recent_foods(
+        self, user_id: uuid.UUID, limit: int = 20
+    ) -> list[RecentFoodRead]:
+        """Return deduplicated food names recently logged by the user with their last-used portion & macros."""
+        query = (
+            select(MealItem, Meal.created_at.label("meal_created_at"))
+            .join(Meal, MealItem.meal_id == Meal.id)
+            .where(Meal.user_id == user_id)
+            .order_by(Meal.created_at.desc(), MealItem.created_at.desc())
+        )
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        seen_names: set[str] = set()
+        recent_foods: list[RecentFoodRead] = []
+
+        for item, meal_created_at in rows:
+            norm_name = item.food_name.strip().lower()
+            if not norm_name or norm_name in seen_names:
+                continue
+            seen_names.add(norm_name)
+            recent_foods.append(
+                RecentFoodRead(
+                    food_id=item.food_id,
+                    food_name=item.food_name,
+                    quantity=item.quantity,
+                    unit=item.unit,
+                    calories=item.calories,
+                    protein=item.protein,
+                    carbohydrates=item.carbohydrates,
+                    fat=item.fat,
+                    fiber=item.fiber,
+                    last_logged_at=meal_created_at,
+                )
+            )
+            if len(recent_foods) >= limit:
+                break
+
+        return recent_foods
+
+    async def relog_meal(
+        self, meal_id: uuid.UUID, user_id: uuid.UUID, tz_offset: int = 0
+    ) -> Meal:
+        """Create a duplicate meal with exact same items and weights, logged now with time-based meal_type."""
+        original = await self.get_meal(meal_id, user_id=user_id)
+
+        client_now = datetime.now(UTC) + timedelta(minutes=tz_offset)
+        new_meal_type = map_hour_to_meal_type(client_now.hour)
+
+        new_meal = Meal(
+            user_id=user_id,
+            image_url=original.image_url,
+            meal_type=new_meal_type,
+            total_calories=original.total_calories,
+            total_protein=original.total_protein,
+            total_carbohydrates=original.total_carbohydrates,
+            total_fat=original.total_fat,
+            total_fiber=original.total_fiber,
+            created_at=datetime.now(UTC),
+        )
+
+        new_meal.items = [
+            MealItem(
+                food_id=item.food_id,
+                food_name=item.food_name,
+                quantity=item.quantity,
+                unit=item.unit,
+                calories=item.calories,
+                protein=item.protein,
+                carbohydrates=item.carbohydrates,
+                fat=item.fat,
+                fiber=item.fiber,
+                confidence=item.confidence,
+                original_calories=item.original_calories,
+                final_calories=item.final_calories,
+                verification_status=item.verification_status,
+                verification_confidence=item.verification_confidence,
+                verification_sources=item.verification_sources,
+                verification_note=item.verification_note,
+            )
+            for item in original.items
+        ]
+
+        self.db.add(new_meal)
+        await self.db.commit()
+        return await self.get_meal(new_meal.id, user_id=user_id)

@@ -101,3 +101,18 @@ class MealRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: list[MealItemRead] = Field(default_factory=list)
+
+
+class RecentFoodRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    food_id: uuid.UUID | None = None
+    food_name: str
+    quantity: float
+    unit: str
+    calories: float
+    protein: float = 0.0
+    carbohydrates: float = 0.0
+    fat: float = 0.0
+    fiber: float = 0.0
+    last_logged_at: datetime

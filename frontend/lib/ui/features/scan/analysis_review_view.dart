@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/analysis_model.dart';
+import '../../../data/models/recent_food_model.dart';
 import '../../../data/repositories/favorite_repository.dart';
+import '../../../data/repositories/meal_repository.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/image_bounding_box_overlay.dart';
 import '../../core/widgets/macro_card.dart';
@@ -19,6 +21,22 @@ class AnalysisReviewView extends StatefulWidget {
 class _AnalysisReviewViewState extends State<AnalysisReviewView> {
   int? _selectedItemIndex;
   final Set<int> _expandedVerificationIndices = {};
+  List<RecentFoodModel> _recentFoods = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentFoods();
+  }
+
+  Future<void> _loadRecentFoods() async {
+    try {
+      final recents = await MealRepository().getRecentFoods(limit: 10);
+      if (mounted) {
+        setState(() => _recentFoods = recents);
+      }
+    } catch (_) {}
+  }
 
   void _showSaveFavoriteDialog(BuildContext context, ScanViewModel scanVm) {
     final defaultName = scanVm.editableItems.isNotEmpty
@@ -456,6 +474,52 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                           ),
                         );
                       }),
+                    if (_recentFoods.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Row(
+                        children: [
+                          Icon(Icons.history_rounded, size: 16, color: AppTheme.primaryDark),
+                          SizedBox(width: 6),
+                          Text(
+                            'Quick Add Recent Food',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _recentFoods.map((recent) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ActionChip(
+                                avatar: const Icon(Icons.add_circle, size: 16, color: AppTheme.primaryGreen),
+                                label: Text(
+                                  '${recent.foodName} (${recent.quantity.toStringAsFixed(0)}${recent.unit})',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                ),
+                                backgroundColor: const Color(0xFFF9FAFB),
+                                side: BorderSide(color: Colors.grey.shade300),
+                                onPressed: () {
+                                  scanVm.addRecentFood(recent);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Added ${recent.foodName} to meal plate!'),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

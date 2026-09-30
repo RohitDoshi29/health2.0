@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
-from app.schemas.meal import MealCreate, MealRead, MealUpdate
+from app.schemas.meal import MealCreate, MealRead, MealUpdate, RecentFoodRead
 from app.services.gemini_service import GeminiService, get_gemini_service
 from app.services.meal_service import MealNotFoundError, MealService
 
@@ -43,6 +43,31 @@ async def list_meals(
     """List meals belonging to the authenticated user."""
     meals = await service.list_meals(user_id=current_user.id, limit=limit, offset=offset)
     return [MealRead.model_validate(m) for m in meals]
+
+
+@router.get("/recent-foods", response_model=list[RecentFoodRead])
+async def get_recent_foods(
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    service: MealService = Depends(_get_meal_service),
+) -> list[RecentFoodRead]:
+    """Get deduplicated food items recently logged by the authenticated user."""
+    return await service.get_recent_foods(user_id=current_user.id, limit=limit)
+
+
+@router.post("/{meal_id}/relog", response_model=MealRead, status_code=status.HTTP_201_CREATED)
+async def relog_meal(
+    meal_id: uuid.UUID,
+    tz_offset: int = Query(default=0, description="Client timezone offset in minutes"),
+    current_user: User = Depends(get_current_user),
+    service: MealService = Depends(_get_meal_service),
+) -> MealRead:
+    """Relog an existing meal with current timestamp and time-mapped meal type."""
+    try:
+        new_meal = await service.relog_meal(meal_id=meal_id, user_id=current_user.id, tz_offset=tz_offset)
+    except MealNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return MealRead.model_validate(new_meal)
 
 
 @router.get("/{meal_id}", response_model=MealRead)

@@ -3,6 +3,7 @@ import '../../core/config/api_constants.dart';
 import '../models/analysis_model.dart';
 import '../models/meal_model.dart';
 import '../models/nutrition_model.dart';
+import '../models/recent_food_model.dart';
 import '../services/api_client.dart';
 import '../services/local_storage_service.dart';
 import '../services/sync_manager.dart';
@@ -171,6 +172,32 @@ class MealRepository {
     } catch (_) {
       return [];
     }
+  }
+
+  Future<List<RecentFoodModel>> getRecentFoods({int limit = 20}) async {
+    try {
+      final response = await _apiClient.get('${ApiConstants.recentFoods}?limit=$limit');
+      if (response is List) {
+        return response.map((item) => RecentFoodModel.fromJson(item as Map<String, dynamic>)).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<MealModel> relogMeal(String mealId, {int? tzOffset}) async {
+    final offset = tzOffset ?? DateTime.now().timeZoneOffset.inMinutes;
+    final response = await _apiClient.post('${ApiConstants.relogMeal(mealId)}?tz_offset=$offset', {});
+    final meal = MealModel.fromJson(response as Map<String, dynamic>);
+
+    // Update local cache
+    final cached = await _storage.getCachedMeals();
+    cached.removeWhere((m) => m.id == meal.id);
+    cached.insert(0, meal);
+    await _storage.saveCachedMeals(cached);
+
+    return meal;
   }
 }
 

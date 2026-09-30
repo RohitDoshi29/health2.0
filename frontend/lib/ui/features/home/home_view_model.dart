@@ -215,4 +215,20 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<MealModel> relogMeal(String mealId) async {
+    final now = DateTime.now();
+    final todayStr =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final tzOffset = now.timeZoneOffset.inMinutes;
+
+    final newMeal = await _mealRepository.relogMeal(mealId, tzOffset: tzOffset);
+    _meals.insert(0, newMeal);
+    try {
+      _analytics = await _goalRepository.getDailyAnalytics(date: todayStr, tzOffset: tzOffset);
+      _trends = await _goalRepository.getTrendsAnalytics(days: _trendDays, tzOffset: tzOffset);
+    } catch (_) {}
+    notifyListeners();
+    return newMeal;
+  }
 }

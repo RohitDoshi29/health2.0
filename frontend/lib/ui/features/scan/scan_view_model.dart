@@ -4,6 +4,7 @@ import '../../../data/models/analysis_model.dart';
 import '../../../data/models/barcode_model.dart';
 import '../../../data/models/meal_model.dart';
 import '../../../data/models/nutrition_model.dart';
+import '../../../data/models/recent_food_model.dart';
 import '../../../data/repositories/analysis_repository.dart';
 import '../../../data/repositories/barcode_repository.dart';
 import '../../../data/repositories/meal_repository.dart';
@@ -82,6 +83,23 @@ class ScanViewModel extends ChangeNotifier {
       _editableItems.removeAt(index);
       notifyListeners();
     }
+  }
+
+  void addRecentFood(RecentFoodModel food) {
+    _editableItems.add(
+      MealItemAnalysisModel(
+        name: food.foodName,
+        quantity: food.quantity,
+        unit: food.unit,
+        estimatedCalories: food.calories,
+        protein: food.protein,
+        carbohydrates: food.carbohydrates,
+        fat: food.fat,
+        fiber: food.fiber,
+        confidence: 1.0,
+      ),
+    );
+    notifyListeners();
   }
 
   double get totalCalories => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.estimatedCalories));

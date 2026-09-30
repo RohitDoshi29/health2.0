@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/analysis_model.dart';
 import '../../../data/models/nutrition_model.dart';
+import '../../../data/models/recent_food_model.dart';
 import '../../../data/repositories/favorite_repository.dart';
 import '../../../data/repositories/meal_repository.dart';
 import '../../core/widgets/custom_button.dart';
@@ -63,11 +64,39 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
   final List<MealItemAnalysisModel> _stagedItems = [];
   bool _isSaving = false;
 
+  // Recent foods
+  List<RecentFoodModel> _recentFoods = [];
+
   @override
   void initState() {
     super.initState();
     _mealRepo = widget.mealRepository ?? MealRepository();
     _favRepo = widget.favoriteRepository ?? FavoriteRepository();
+    _loadRecentFoods();
+  }
+
+  Future<void> _loadRecentFoods() async {
+    try {
+      final recents = await _mealRepo.getRecentFoods(limit: 15);
+      if (mounted) {
+        setState(() {
+          _recentFoods = recents;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _selectRecentFood(RecentFoodModel food) {
+    setState(() {
+      _nameController.text = food.foodName;
+      _quantityController.text = food.quantity.toStringAsFixed(0);
+      _selectedUnit = _units.contains(food.unit) ? food.unit : 'g';
+      _caloriesController.text = food.calories.toStringAsFixed(0);
+      _proteinController.text = food.protein.toStringAsFixed(1);
+      _carbsController.text = food.carbohydrates.toStringAsFixed(1);
+      _fatController.text = food.fat.toStringAsFixed(1);
+      _fiberController.text = food.fiber.toStringAsFixed(1);
+    });
   }
 
   @override
@@ -341,7 +370,13 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
                 const SizedBox(height: 8),
                 _buildSearchResultsList(),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+
+              // Recent Foods Chip List
+              if (_recentFoods.isNotEmpty) ...[
+                _buildRecentFoodsChips(),
+                const SizedBox(height: 16),
+              ],
 
               // Item Form
               _buildItemFormCard(),
@@ -496,6 +531,62 @@ class _ManualFoodEntryViewState extends State<ManualFoodEntryView> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildRecentFoodsChips() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.history_rounded, size: 16, color: AppTheme.primaryDark),
+                SizedBox(width: 6),
+                Text(
+                  'Recent Foods',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              'Tap to autofill',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _recentFoods.map((recent) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ActionChip(
+                  avatar: const CircleAvatar(
+                    radius: 10,
+                    backgroundColor: AppTheme.primaryLight,
+                    child: Icon(Icons.restaurant_rounded, size: 12, color: AppTheme.primaryDark),
+                  ),
+                  label: Text(
+                    '${recent.foodName} (${recent.quantity.toStringAsFixed(0)}${recent.unit} • ${recent.calories.toStringAsFixed(0)} kcal)',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                  backgroundColor: const Color(0xFFF9FAFB),
+                  side: BorderSide(color: Colors.grey.shade300),
+                  onPressed: () => _selectRecentFood(recent),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
