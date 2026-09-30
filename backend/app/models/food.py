@@ -57,3 +57,39 @@ class Food(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Food id={self.id} canonical_name={self.canonical_name!r}>"
+
+    @property
+    def is_physically_valid(self) -> bool:
+        """Sanity check to ensure nutrition database records are physically plausible.
+
+        Checks:
+        1. Non-negative nutrients (calories >= 0, protein >= 0, carbs >= 0, fat >= 0, fiber >= 0)
+        2. Serving size must be strictly positive
+        3. Caloric density <= 9.5 kcal/g (fat is ~9.0 kcal/g; normal food cannot exceed this)
+        4. Protein mass <= serving size * 1.02
+        5. Total macronutrient mass (protein + carbs + fat) <= serving size * 1.05
+        """
+        if (
+            self.calories < 0.0
+            or self.protein < 0.0
+            or self.carbohydrates < 0.0
+            or self.fat < 0.0
+            or (self.fiber or 0.0) < 0.0
+        ):
+            return False
+
+        size = self.serving_size or 0.0
+        if size <= 0.0:
+            return False
+
+        if self.serving_unit.lower() in ("g", "gram", "grams", "ml"):
+            cal_density = self.calories / size
+            if cal_density > 9.5:
+                return False
+            if self.protein > (size * 1.02):
+                return False
+            macro_mass = self.protein + self.carbohydrates + self.fat
+            if macro_mass > (size * 1.05):
+                return False
+
+        return True

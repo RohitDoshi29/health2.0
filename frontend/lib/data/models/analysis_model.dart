@@ -116,9 +116,19 @@ class MealItemAnalysisModel {
   double fat;
   double fiber;
   double? confidence;
+  bool matched;
   String? matchedFoodId;
   BoundingBoxModel? boundingBox;
   VerificationDetailModel? verification;
+  bool isComponent;
+  String? parentFood;
+  double referenceServingSize;
+  String referenceServingUnit;
+  double? referenceCaloriesPer100g;
+  double? referenceProteinPer100g;
+  double? referenceCarbsPer100g;
+  double? referenceFatPer100g;
+  double? referenceFiberPer100g;
 
   MealItemAnalysisModel({
     required this.name,
@@ -132,9 +142,19 @@ class MealItemAnalysisModel {
     required this.fat,
     required this.fiber,
     this.confidence,
+    this.matched = false,
     this.matchedFoodId,
     this.boundingBox,
     this.verification,
+    this.isComponent = false,
+    this.parentFood,
+    this.referenceServingSize = 100.0,
+    this.referenceServingUnit = 'g',
+    this.referenceCaloriesPer100g,
+    this.referenceProteinPer100g,
+    this.referenceCarbsPer100g,
+    this.referenceFatPer100g,
+    this.referenceFiberPer100g,
   });
 
   factory MealItemAnalysisModel.fromJson(Map<String, dynamic> json) {
@@ -150,6 +170,7 @@ class MealItemAnalysisModel {
       fat: (json['fat'] as num?)?.toDouble() ?? 0.0,
       fiber: (json['fiber'] as num?)?.toDouble() ?? 0.0,
       confidence: (json['confidence'] as num?)?.toDouble(),
+      matched: json['matched'] as bool? ?? false,
       matchedFoodId: json['matched_food_id'] as String?,
       boundingBox: json['bounding_box'] != null
           ? BoundingBoxModel.fromJson(json['bounding_box'] as Map<String, dynamic>)
@@ -157,6 +178,15 @@ class MealItemAnalysisModel {
       verification: json['verification'] != null
           ? VerificationDetailModel.fromJson(json['verification'] as Map<String, dynamic>)
           : null,
+      isComponent: json['is_component'] as bool? ?? false,
+      parentFood: json['parent_food'] as String?,
+      referenceServingSize: (json['reference_serving_size'] as num?)?.toDouble() ?? 100.0,
+      referenceServingUnit: json['reference_serving_unit'] as String? ?? 'g',
+      referenceCaloriesPer100g: (json['reference_calories_per_100g'] as num?)?.toDouble(),
+      referenceProteinPer100g: (json['reference_protein_per_100g'] as num?)?.toDouble(),
+      referenceCarbsPer100g: (json['reference_carbs_per_100g'] as num?)?.toDouble(),
+      referenceFatPer100g: (json['reference_fat_per_100g'] as num?)?.toDouble(),
+      referenceFiberPer100g: (json['reference_fiber_per_100g'] as num?)?.toDouble(),
     );
   }
 
@@ -185,13 +215,19 @@ class MealItemAnalysisModel {
 class MealAnalysisResponseModel {
   final NutritionSummaryModel total;
   final List<MealItemAnalysisModel> items;
+  final List<String> unmatchedItems;
   final String? imageUrl;
+  final String verificationStatus;
+  final List<String> warnings;
   final String disclaimer;
 
   MealAnalysisResponseModel({
     required this.total,
     required this.items,
+    this.unmatchedItems = const [],
     this.imageUrl,
+    this.verificationStatus = 'verified',
+    this.warnings = const [],
     required this.disclaimer,
   });
 
@@ -201,9 +237,17 @@ class MealAnalysisResponseModel {
       items: (json['items'] as List<dynamic>)
           .map((e) => MealItemAnalysisModel.fromJson(e as Map<String, dynamic>))
           .toList(),
+      unmatchedItems: (json['unmatched_items'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       imageUrl: json['image_url'] as String?,
+      verificationStatus: json['verification_status'] as String? ?? 'verified',
+      warnings: (json['warnings'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       disclaimer: json['disclaimer'] as String? ?? '',
     );
   }
 }
-

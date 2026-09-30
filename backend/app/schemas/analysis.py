@@ -5,7 +5,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.nutrition import NutritionSummary
-from app.schemas.verification import VerificationDetail
+from app.schemas.verification import VerificationDetail, VerificationStatus
 
 
 class QuantityUnit(str, Enum):
@@ -98,6 +98,27 @@ class MealItemAnalysis(BaseModel):
         default=None,
         description="Detailed verification report from the Calorie Verification Engine",
     )
+    is_component: bool = Field(
+        default=False,
+        description="True if this item is a recognized ingredient/topping of a composite dish",
+    )
+    parent_food: str | None = Field(
+        default=None,
+        description="Name of the parent composite dish if this item is a child ingredient",
+    )
+    reference_serving_size: float = Field(
+        default=100.0, description="Serving size basis in the reference database"
+    )
+    reference_serving_unit: str = Field(
+        default="g", description="Serving unit basis in the reference database"
+    )
+    reference_calories_per_100g: float | None = Field(
+        default=None, description="Reference calories per 100g in database for user recalculation"
+    )
+    reference_protein_per_100g: float | None = Field(default=None)
+    reference_carbs_per_100g: float | None = Field(default=None)
+    reference_fat_per_100g: float | None = Field(default=None)
+    reference_fiber_per_100g: float | None = Field(default=None)
 
 
 class MealAnalysisResponse(BaseModel):
@@ -115,6 +136,14 @@ class MealAnalysisResponse(BaseModel):
     )
     image_url: str | None = Field(
         default=None, description="Persisted image URL on the server"
+    )
+    verification_status: VerificationStatus = Field(
+        default=VerificationStatus.VERIFIED,
+        description="Overall verification verdict for the meal",
+    )
+    warnings: list[str] = Field(
+        default_factory=list,
+        description="Warnings or anomaly notes regarding meal plausibility",
     )
     disclaimer: str = (
         "Nutrition values are estimates derived from an AI-identified photo "

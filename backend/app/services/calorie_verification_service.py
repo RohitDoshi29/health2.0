@@ -1,9 +1,9 @@
 """Calorie Verification Engine.
 
 Performs multi-source corroboration, independent macro consistency checking
-(Atwater 4-9-4 rule), ingredient decomposition for mixed dishes, anomaly
-detection, and source-priority resolution to deliver transparent and calibrated
-caloric estimations.
+(Atwater 4-9-4 rule), ingredient decomposition for mixed dishes, strict biological
+anomaly detection, and source-priority resolution to deliver transparent, calibrated,
+and physically plausible caloric estimations.
 """
 
 from dataclasses import dataclass
@@ -18,8 +18,7 @@ from app.schemas.verification import (
 
 logger = logging.getLogger(__name__)
 
-# Ingredient decomposition recipes for common Indian and mixed dishes
-# per typical 100g or 1 standard serving
+# Ingredient decomposition recipes for common mixed dishes
 COMPOSITE_DISH_RECIPES: dict[str, list[dict[str, Any]]] = {
     "paneer butter masala": [
         {"ingredient": "paneer", "grams": 30.0, "cals_per_100g": 296.0},
@@ -88,6 +87,8 @@ class VerificationInput:
     barcode_calories: float | None = None
     reference_usda_calories: float | None = None
     is_matched_in_db: bool = True
+    is_component: bool = False
+    parent_food: str | None = None
 
 
 class CalorieVerificationService:
@@ -100,11 +101,10 @@ class CalorieVerificationService:
         """Independently calculate calories from macronutrients via Atwater general factors.
 
         Protein: 4 kcal/g
-        Carbohydrates: 4 kcal/g
+        Carbohydrates (digestible): 4 kcal/g
         Fat: 9 kcal/g
         Fiber: 2 kcal/g (insoluble/partially fermented fiber contribution)
         """
-        # If total carbohydrates include fiber, adjust digestible carbs + fiber
         digestible_carbs = max(0.0, carbohydrates - fiber)
         macro_cals = (protein * 4.0) + (digestible_carbs * 4.0) + (fiber * 2.0) + (fat * 9.0)
         return round(macro_cals, 2)
@@ -144,24 +144,45 @@ class CalorieVerificationService:
         fiber: float,
         grams: float,
     ) -> list[str]:
-        """Detect physically impossible or physiologically implausible values."""
+        """Detect physically impossible or physiologically implausible values.
+
+        Enforces Checks A through F:
+        Check A: No negative calories or macronutrients.
+        Check B: Macronutrient mass cannot exceed total physical food weight (+5% tolerance).
+        Check C: Discrepancy between reported calories and independent macro-derived calories.
+        Check D: Caloric density cannot exceed the physical energy density of pure fat (9.5 kcal/g).
+        Check E: Protein mass cannot exceed physical food weight (+2% tolerance).
+        Check F: Plausibility bounds for single meal portions.
+        """
         anomalies: list[str] = []
 
+        # Check A: Negative values
         if calories < 0.0:
             anomalies.append("negative_calories")
         if protein < 0.0 or carbohydrates < 0.0 or fat < 0.0 or fiber < 0.0:
             anomalies.append("negative_macronutrients")
 
         if grams > 0:
-            # Total macro mass cannot exceed total physical weight plus a 5% margin
-            total_macro_mass = protein + carbohydrates + fat + fiber
-            if total_macro_mass > (grams * 1.05) and grams > 5:
+            # Check B: Macro mass vs physical weight
+            digestible_carbs = max(0.0, carbohydrates - fiber)
+            total_macro_mass = protein + digestible_carbs + fat + fiber
+            if total_macro_mass > (grams * 1.05) and grams > 5.0:
                 anomalies.append("macronutrient_mass_exceeds_weight")
 
-            # Caloric density cannot exceed pure fat (9 kcal/g)
+            # Check D: Caloric density limit (fat is ~9.0 kcal/g; normal food <= 9.5 kcal/g)
             caloric_density = calories / grams
-            if caloric_density > 9.05:
+            if caloric_density > 9.5:
                 anomalies.append("extreme_calorie_density")
+
+            # Check E: Protein mass cannot exceed food weight
+            if protein > (grams * 1.02) and grams > 5.0:
+                anomalies.append("protein_exceeds_weight")
+
+        # Check F: Single portion plausibility threshold (flag suspicious extreme single items)
+        if calories > 3500.0:
+            anomalies.append("excessive_single_item_calories")
+        if protein > 200.0:
+            anomalies.append("excessive_single_item_protein")
 
         return anomalies
 
@@ -174,20 +195,31 @@ class CalorieVerificationService:
         is_matched_in_db: bool,
         has_barcode_or_usda: bool,
         discrepancy_pct: float,
+        has_anomalies: bool = False,
+        is_zero_nutrition: bool = False,
     ) -> ConfidenceBreakdown:
         """Calculate 3-part confidence scores (0-100 scale)."""
-        # 1. Food identification confidence (from model or user)
+        # If critical anomalies are present, confidences collapse
+        if has_anomalies:
+            return ConfidenceBreakdown(
+                food_confidence=round(food_confidence_raw * 100.0, 1),
+                portion_confidence=15.0,
+                nutrition_confidence=10.0,
+                overall_confidence=15.0,
+            )
+
+        # 1. Food identification confidence
         food_conf = max(0.0, min(100.0, food_confidence_raw * 100.0))
 
         # 2. Portion confidence: precise metric units (g, ml) are high confidence;
-        # ambiguous units (bowl, piece, plate) have moderate confidence.
+        # ambiguous units have lower confidence.
         if portion_confidence_raw is not None:
             portion_conf = max(0.0, min(100.0, portion_confidence_raw * 100.0))
         else:
             unit_clean = unit.strip().lower()
             if unit_clean in ("g", "gram", "grams", "ml"):
                 portion_conf = 95.0
-            elif unit_clean in ("cup", "tbsp", "tsp", "slice"):
+            elif unit_clean in ("slice", "cup", "tbsp", "tsp"):
                 portion_conf = 85.0
             elif unit_clean in ("piece", "item"):
                 portion_conf = 75.0
@@ -196,24 +228,27 @@ class CalorieVerificationService:
             else:
                 portion_conf = 60.0
 
-        # 3. Nutrition data confidence: depends on source credibility & discrepancy
+        # 3. Nutrition data confidence
         if has_barcode_or_usda:
             base_nutri = 95.0
         elif is_matched_in_db:
             base_nutri = 85.0
+        elif is_zero_nutrition:
+            base_nutri = 5.0
         else:
             base_nutri = 35.0
 
-        # Discrepancy penalty
         penalty = min(35.0, discrepancy_pct * 0.7)
-        nutrition_conf = max(15.0, min(100.0, base_nutri - penalty))
+        nutrition_conf = max(5.0, min(100.0, base_nutri - penalty))
 
-        # Composite weighted overall confidence
         overall = (food_conf * 0.40) + (portion_conf * 0.30) + (nutrition_conf * 0.30)
 
-        # When food is unmatched in any database, overall confidence is capped at 65%
+        # Unmatched food is capped at moderate-low confidence
         if not is_matched_in_db and not has_barcode_or_usda:
-            overall = min(65.0, overall)
+            if is_zero_nutrition:
+                overall = min(35.0, overall)
+            else:
+                overall = min(65.0, overall)
 
         return ConfidenceBreakdown(
             food_confidence=round(food_conf, 1),
@@ -224,7 +259,7 @@ class CalorieVerificationService:
 
     @classmethod
     def verify(cls, item: VerificationInput) -> VerificationDetail:
-        """Run full multi-source verification and anomaly detection for a food item."""
+        """Run full multi-source verification and safety gates for a food item."""
         anomalies = cls.detect_anomalies(
             calories=item.calories,
             protein=item.protein,
@@ -266,119 +301,150 @@ class CalorieVerificationService:
             sources_consulted.extend(decomp_sources)
             source_breakdown["ingredient_decomposition"] = decomp_cals
 
-        # -------------------------------------------------------------
-        # Decision Engine & Source Hierarchy
-        # -------------------------------------------------------------
         original_cals = item.calories
         final_cals = original_cals
         discrepancy_pct = 0.0
         note = "Nutrition values are consistent across available sources."
         status = VerificationStatus.VERIFIED
 
-        # Hard failure on biological anomalies
+        # Component / Topping handling (Anti-Double-Counting)
+        if item.is_component:
+            status = VerificationStatus.VERIFIED
+            parent_name = item.parent_food or "composite dish"
+            note = f"Topping/ingredient included in {parent_name}. Calories accounted for in parent dish."
+            confidence_breakdown = cls.compute_confidences(
+                food_confidence_raw=item.food_confidence,
+                portion_confidence_raw=item.portion_confidence,
+                unit=item.unit,
+                is_matched_in_db=item.is_matched_in_db,
+                has_barcode_or_usda=False,
+                discrepancy_pct=0.0,
+            )
+            return VerificationDetail(
+                final_calories=0.0,
+                original_calories=round(original_cals, 2),
+                macro_derived_calories=0.0,
+                verification_status=status,
+                confidence_score=confidence_breakdown.overall_confidence,
+                confidence_breakdown=confidence_breakdown,
+                verification_sources=sources_consulted,
+                source_breakdown=source_breakdown,
+                discrepancy_percent=0.0,
+                verification_note=note,
+                anomaly_flags=[],
+            )
+
+        # 1. Hard failure on biological / physical anomalies (negative macros, macro mass > grams, etc.)
         if anomalies:
             status = VerificationStatus.NEEDS_CONFIRMATION
-            note = f"Critical anomaly detected: {', '.join(anomalies)}."
+            note = (
+                f"Critical physical anomaly detected ({', '.join(anomalies)}). "
+                "Values are physically impossible or inconsistent. Please confirm portion."
+            )
             discrepancy_pct = 100.0
+
+        # 2. Unmatched food handling
         elif not item.is_matched_in_db and item.barcode_calories is None and item.reference_usda_calories is None:
-            # AI estimate only — no database match
             status = VerificationStatus.LOW_CONFIDENCE
-            note = "Food not found in reference database. Values are estimated from AI and macro modeling."
+            note = (
+                "Food not found in reference database. "
+                "Values are estimated from AI and macro modeling. Please confirm portion."
+            )
             if macro_cals > 0 and original_cals > 0:
                 discrepancy_pct = round(
                     abs(original_cals - macro_cals) / max(original_cals, 1.0) * 100.0, 1
                 )
             else:
                 discrepancy_pct = 0.0
-        else:
-            # 1. Barcode/Nutrition Label takes highest priority
-            if item.barcode_calories is not None:
-                trusted_val = item.barcode_calories
-                diff_pct = abs(original_cals - trusted_val) / max(trusted_val, 1.0) * 100.0
-                discrepancy_pct = round(diff_pct, 1)
 
-                if diff_pct > 12.0:
-                    status = VerificationStatus.CORRECTED
-                    final_cals = trusted_val
-                    note = (
-                        f"Adjusted to verified barcode label ({trusted_val} kcal, "
-                        f"{discrepancy_pct}% difference from visual estimate)."
-                    )
-                else:
-                    status = VerificationStatus.VERIFIED
-                    final_cals = trusted_val
-                    note = "Verified against packaged product barcode nutrition label."
+        # 3. Barcode/Nutrition Label takes highest priority
+        elif item.barcode_calories is not None:
+            trusted_val = item.barcode_calories
+            diff_pct = abs(original_cals - trusted_val) / max(trusted_val, 1.0) * 100.0
+            discrepancy_pct = round(diff_pct, 1)
 
-            # 2. USDA external reference check
-            elif item.reference_usda_calories is not None:
-                trusted_val = item.reference_usda_calories
-                diff_pct = abs(original_cals - trusted_val) / max(trusted_val, 1.0) * 100.0
-                discrepancy_pct = round(diff_pct, 1)
-
-                if diff_pct > 35.0:
-                    status = VerificationStatus.NEEDS_CONFIRMATION
-                    note = (
-                        f"Significant divergence ({discrepancy_pct}%) between database and USDA reference "
-                        f"({original_cals} vs {trusted_val} kcal). Please confirm portion."
-                    )
-                elif diff_pct > 15.0:
-                    status = VerificationStatus.CORRECTED
-                    final_cals = trusted_val
-                    note = f"Corrected using USDA reference standard ({trusted_val} kcal)."
-                elif diff_pct > 8.0:
-                    status = VerificationStatus.VERIFIED_WITH_WARNING
-                    note = f"Verified with moderate variance ({discrepancy_pct}%) against USDA reference."
-                else:
-                    status = VerificationStatus.VERIFIED
-                    note = "Verified against USDA FoodData Central reference standard."
-
-            # 3. Ingredient decomposition for mixed dishes
-            elif decomp_cals is not None:
-                diff_pct = abs(original_cals - decomp_cals) / max(decomp_cals, 1.0) * 100.0
-                discrepancy_pct = round(diff_pct, 1)
-
-                if diff_pct > 35.0:
-                    status = VerificationStatus.NEEDS_CONFIRMATION
-                    note = (
-                        f"Discrepancy ({discrepancy_pct}%) between composite dish estimate and "
-                        f"ingredient sum ({original_cals} vs {decomp_cals} kcal)."
-                    )
-                elif diff_pct > 15.0:
-                    status = VerificationStatus.VERIFIED_WITH_WARNING
-                    note = (
-                        f"Ingredient recipe sum ({decomp_cals} kcal) has {discrepancy_pct}% variance "
-                        "from standard database serving."
-                    )
-                else:
-                    status = VerificationStatus.VERIFIED
-                    note = "Verified against culinary ingredient breakdown."
-
-            # 4. Standard local database + Atwater macro check
+            if diff_pct > 12.0:
+                status = VerificationStatus.CORRECTED
+                final_cals = trusted_val
+                note = (
+                    f"Adjusted to verified barcode label ({trusted_val} kcal, "
+                    f"{discrepancy_pct}% difference from visual estimate)."
+                )
             else:
-                if original_cals > 0 and macro_cals > 0:
-                    diff_pct = abs(original_cals - macro_cals) / max(original_cals, 1.0) * 100.0
-                    discrepancy_pct = round(diff_pct, 1)
+                status = VerificationStatus.VERIFIED
+                final_cals = trusted_val
+                note = "Verified against packaged product barcode nutrition label."
 
-                    if diff_pct > 35.0:
-                        status = VerificationStatus.NEEDS_CONFIRMATION
-                        note = (
-                            f"Macro consistency discrepancy is high ({discrepancy_pct}%). "
-                            "Reported calories diverge from physical macronutrient calculation."
-                        )
-                    elif diff_pct > 15.0:
-                        status = VerificationStatus.VERIFIED_WITH_WARNING
-                        note = (
-                            f"Calories verified with {discrepancy_pct}% variance against "
-                            "macronutrient totals."
-                        )
-                    else:
-                        status = VerificationStatus.VERIFIED
-                        note = "Verified against local reference database and macro consistency."
+        # 4. USDA external reference check
+        elif item.reference_usda_calories is not None:
+            trusted_val = item.reference_usda_calories
+            diff_pct = abs(original_cals - trusted_val) / max(trusted_val, 1.0) * 100.0
+            discrepancy_pct = round(diff_pct, 1)
+
+            if diff_pct > 35.0:
+                status = VerificationStatus.NEEDS_CONFIRMATION
+                note = (
+                    f"Significant divergence ({discrepancy_pct}%) between database and USDA reference "
+                    f"({original_cals} vs {trusted_val} kcal). Please confirm portion."
+                )
+            elif diff_pct > 15.0:
+                status = VerificationStatus.CORRECTED
+                final_cals = trusted_val
+                note = f"Corrected using USDA reference standard ({trusted_val} kcal)."
+            elif diff_pct > 8.0:
+                status = VerificationStatus.VERIFIED_WITH_WARNING
+                note = f"Verified with moderate variance ({discrepancy_pct}%) against USDA reference."
+            else:
+                status = VerificationStatus.VERIFIED
+                note = "Verified against USDA FoodData Central reference standard."
+
+        # 5. Ingredient decomposition for mixed dishes
+        elif decomp_cals is not None:
+            diff_pct = abs(original_cals - decomp_cals) / max(decomp_cals, 1.0) * 100.0
+            discrepancy_pct = round(diff_pct, 1)
+
+            if diff_pct > 35.0:
+                status = VerificationStatus.NEEDS_CONFIRMATION
+                note = (
+                    f"Discrepancy ({discrepancy_pct}%) between composite dish estimate and "
+                    f"ingredient sum ({original_cals} vs {decomp_cals} kcal). Please confirm portion."
+                )
+            elif diff_pct > 15.0:
+                status = VerificationStatus.VERIFIED_WITH_WARNING
+                note = (
+                    f"Ingredient recipe sum ({decomp_cals} kcal) has {discrepancy_pct}% variance "
+                    "from standard database serving."
+                )
+            else:
+                status = VerificationStatus.VERIFIED
+                note = "Verified against culinary ingredient breakdown."
+
+        # 6. Standard local database + Atwater macro consistency check
+        else:
+            if original_cals > 0 and macro_cals > 0:
+                diff_pct = abs(original_cals - macro_cals) / max(original_cals, 1.0) * 100.0
+                discrepancy_pct = round(diff_pct, 1)
+
+                if diff_pct > 35.0:
+                    status = VerificationStatus.NEEDS_CONFIRMATION
+                    note = (
+                        f"Macro consistency discrepancy is high ({discrepancy_pct}%). "
+                        "Reported calories diverge from physical macronutrient calculation. Please confirm portion."
+                    )
+                    anomalies.append("macro_consistency_discrepancy")
+                elif diff_pct > 15.0:
+                    status = VerificationStatus.VERIFIED_WITH_WARNING
+                    note = (
+                        f"Calories verified with {discrepancy_pct}% variance against "
+                        "macronutrient totals."
+                    )
                 else:
                     status = VerificationStatus.VERIFIED
-                    discrepancy_pct = 0.0
+                    note = "Verified against local reference database and macro consistency."
+            else:
+                status = VerificationStatus.VERIFIED
+                discrepancy_pct = 0.0
 
-        # Compute confidence breakdown
         confidence_breakdown = cls.compute_confidences(
             food_confidence_raw=item.food_confidence,
             portion_confidence_raw=item.portion_confidence,
@@ -386,6 +452,8 @@ class CalorieVerificationService:
             is_matched_in_db=item.is_matched_in_db,
             has_barcode_or_usda=(item.barcode_calories is not None or item.reference_usda_calories is not None),
             discrepancy_pct=discrepancy_pct,
+            has_anomalies=bool(anomalies),
+            is_zero_nutrition=(item.calories == 0.0 and item.protein == 0.0),
         )
 
         return VerificationDetail(
@@ -401,3 +469,40 @@ class CalorieVerificationService:
             verification_note=note,
             anomaly_flags=anomalies,
         )
+
+    @classmethod
+    def validate_final_meal(
+        cls, items: list[Any], total: Any
+    ) -> tuple[VerificationStatus, list[str]]:
+        """Run a final safety validation gate on the aggregated meal response."""
+        warnings: list[str] = []
+        overall_status = VerificationStatus.VERIFIED
+
+        # Check total values
+        if total.estimated_calories < 0.0 or total.protein < 0.0 or total.carbohydrates < 0.0 or total.fat < 0.0:
+            warnings.append("Total meal contains negative nutrient values.")
+            overall_status = VerificationStatus.NEEDS_CONFIRMATION
+
+        # Total macro consistency check
+        total_macro_cals = cls.calculate_macro_calories(
+            total.protein, total.carbohydrates, total.fat, total.fiber
+        )
+        if total.estimated_calories > 20.0 and total_macro_cals > 0.0:
+            diff = abs(total.estimated_calories - total_macro_cals) / total.estimated_calories * 100.0
+            if diff > 35.0:
+                warnings.append(
+                    f"Overall meal calories diverge from total macronutrient calories by {diff:.1f}%."
+                )
+                overall_status = VerificationStatus.NEEDS_CONFIRMATION
+
+        # If any non-component item has NEEDS_CONFIRMATION or critical anomalies
+        for item in items:
+            v = getattr(item, "verification", None)
+            if v:
+                if v.verification_status == VerificationStatus.NEEDS_CONFIRMATION and not getattr(item, "is_component", False):
+                    overall_status = VerificationStatus.NEEDS_CONFIRMATION
+                    warnings.append(f"Item '{item.name}' requires portion/nutrition confirmation.")
+                elif v.verification_status == VerificationStatus.VERIFIED_WITH_WARNING and overall_status == VerificationStatus.VERIFIED:
+                    overall_status = VerificationStatus.VERIFIED_WITH_WARNING
+
+        return overall_status, warnings

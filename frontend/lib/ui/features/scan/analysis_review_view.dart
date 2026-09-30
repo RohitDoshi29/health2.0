@@ -275,9 +275,59 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                                                   color: AppTheme.textPrimary,
                                                 ),
                                               ),
-                                              if (item.verification != null)
+                                              if (item.isComponent) ...[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 7, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blueGrey.shade50,
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(Icons.layers_outlined,
+                                                          size: 12, color: Colors.blueGrey.shade700),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'Included in ${item.parentFood ?? "primary dish"}',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w700,
+                                                          color: Colors.blueGrey.shade800,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ] else if (item.verification != null)
                                                 _buildVerificationBadge(item)
-                                              else if (item.confidence != null) ...[
+                                              else if (!item.matched) ...[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.orange.shade50,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(Icons.help_outline_rounded,
+                                                          size: 11, color: Colors.orange.shade800),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'Unmatched',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.orange.shade800,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ] else if (item.confidence != null) ...[
                                                 Container(
                                                   padding: const EdgeInsets.symmetric(
                                                       horizontal: 6, vertical: 2),
@@ -298,13 +348,32 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
                                             ],
                                           ),
                                           const SizedBox(height: 4),
-                                          Text(
-                                            '${item.estimatedCalories.toStringAsFixed(0)} kcal • P: ${item.protein}g • C: ${item.carbohydrates}g • F: ${item.fat}g',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textSecondary,
+                                          if (item.isComponent)
+                                            Text(
+                                              'Topping / ingredient • Included in ${item.parentFood ?? "primary dish"}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.textSecondary,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            )
+                                          else if (!item.matched && item.estimatedCalories == 0.0)
+                                            Text(
+                                              'Nutrition unavailable in database • Please confirm portion',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.orange.shade900,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            )
+                                          else
+                                            Text(
+                                              '${item.estimatedCalories.toStringAsFixed(0)} kcal • P: ${item.protein}g • C: ${item.carbohydrates}g • F: ${item.fat}g',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.textSecondary,
+                                              ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),

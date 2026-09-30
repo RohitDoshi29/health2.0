@@ -84,11 +84,11 @@ class ScanViewModel extends ChangeNotifier {
     }
   }
 
-  double get totalCalories => _editableItems.fold(0.0, (sum, i) => sum + i.estimatedCalories);
-  double get totalProtein => _editableItems.fold(0.0, (sum, i) => sum + i.protein);
-  double get totalCarbs => _editableItems.fold(0.0, (sum, i) => sum + i.carbohydrates);
-  double get totalFat => _editableItems.fold(0.0, (sum, i) => sum + i.fat);
-  double get totalFiber => _editableItems.fold(0.0, (sum, i) => sum + i.fiber);
+  double get totalCalories => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.estimatedCalories));
+  double get totalProtein => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.protein));
+  double get totalCarbs => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.carbohydrates));
+  double get totalFat => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.fat));
+  double get totalFiber => _editableItems.fold(0.0, (sum, i) => sum + (i.isComponent ? 0.0 : i.fiber));
 
   Future<void> pickAndAnalyze(ImageSource source) async {
     try {
