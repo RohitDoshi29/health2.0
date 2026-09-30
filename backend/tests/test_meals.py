@@ -32,9 +32,7 @@ def sample_meal_payload() -> dict:
 async def test_create_meal_authenticated(
     client: AsyncClient, auth_headers: dict[str, str], test_user: User, sample_meal_payload: dict
 ) -> None:
-    response = await client.post(
-        "/api/v1/meals", json=sample_meal_payload, headers=auth_headers
-    )
+    response = await client.post("/api/v1/meals", json=sample_meal_payload, headers=auth_headers)
     assert response.status_code == 201
     data = response.json()
     assert data["user_id"] == str(test_user.id)
@@ -149,9 +147,7 @@ async def test_meal_crud_flow(
     client: AsyncClient, auth_headers: dict[str, str], sample_meal_payload: dict
 ) -> None:
     # Create
-    create_res = await client.post(
-        "/api/v1/meals", json=sample_meal_payload, headers=auth_headers
-    )
+    create_res = await client.post("/api/v1/meals", json=sample_meal_payload, headers=auth_headers)
     assert create_res.status_code == 201
     meal_id = create_res.json()["id"]
 
@@ -174,4 +170,3 @@ async def test_meal_crud_flow(
     # Verify deleted
     verify_res = await client.get(f"/api/v1/meals/{meal_id}", headers=auth_headers)
     assert verify_res.status_code == 404
-

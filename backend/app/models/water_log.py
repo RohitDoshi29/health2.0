@@ -31,4 +31,3 @@ class WaterLog(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<WaterLog id={self.id} user_id={self.user_id} amount_ml={self.amount_ml}>"
-

@@ -64,7 +64,9 @@ async def relog_meal(
 ) -> MealRead:
     """Relog an existing meal with current timestamp and time-mapped meal type."""
     try:
-        new_meal = await service.relog_meal(meal_id=meal_id, user_id=current_user.id, tz_offset=tz_offset)
+        new_meal = await service.relog_meal(
+            meal_id=meal_id, user_id=current_user.id, tz_offset=tz_offset
+        )
     except MealNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return MealRead.model_validate(new_meal)

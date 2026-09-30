@@ -11,8 +11,6 @@ Covers:
 8. Mixed dish ingredient decomposition (paneer butter masala, biryani)
 """
 
-import pytest
-
 from app.schemas.verification import VerificationStatus
 from app.services.calorie_verification_service import (
     CalorieVerificationService,
@@ -227,4 +225,3 @@ def test_scenario_8_mixed_dish_ingredient_decomposition() -> None:
         VerificationStatus.VERIFIED_WITH_WARNING,
     )
     assert result.source_breakdown["ingredient_decomposition"] > 0
-

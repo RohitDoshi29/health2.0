@@ -294,9 +294,7 @@ async def import_usda_foods() -> None:
             canonical = canonicalize_name(term)
 
             # 1. Check idempotency: skip if already present
-            existing = await db.execute(
-                select(Food).where(Food.canonical_name == canonical)
-            )
+            existing = await db.execute(select(Food).where(Food.canonical_name == canonical))
             if existing.scalar_one_or_none() is not None:
                 logger.info(
                     "[%d/%d] Skip (already exists): %s",

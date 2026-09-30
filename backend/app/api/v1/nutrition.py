@@ -93,4 +93,3 @@ async def lookup_barcode(barcode: str) -> BarcodeProductRead:
         )
 
     return product
-

@@ -129,4 +129,3 @@ async def quick_log_favorite(
     service = MealService(db=db, gemini_service=gemini_service)
     meal = await service.create_meal(payload=meal_payload, user_id=current_user.id)
     return MealRead.model_validate(meal)
-

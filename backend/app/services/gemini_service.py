@@ -220,12 +220,9 @@ class GeminiService:
 
         if not detections and payload.get("foods"):
             # Every item was malformed — treat this as a hard parsing failure.
-            raise GeminiResponseParsingError(
-                "None of the items in Gemini's response were valid."
-            )
+            raise GeminiResponseParsingError("None of the items in Gemini's response were valid.")
 
         return GeminiAnalysisResult(foods=detections)
-
 
 
 def get_gemini_service() -> GeminiService:

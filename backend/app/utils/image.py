@@ -117,9 +117,7 @@ def resize_if_needed(
             needs_downscale = width > max_dimension_px or height > max_dimension_px
 
             if needs_downscale:
-                pil_img.thumbnail(
-                    (max_dimension_px, max_dimension_px), Image.Resampling.BICUBIC
-                )
+                pil_img.thumbnail((max_dimension_px, max_dimension_px), Image.Resampling.BICUBIC)
 
             out_io = io.BytesIO()
             mime = image.content_type.lower()

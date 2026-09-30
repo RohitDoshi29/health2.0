@@ -45,4 +45,3 @@ class Goal(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Goal user_id={self.user_id} calories={self.calorie_target}>"
-

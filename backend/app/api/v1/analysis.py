@@ -31,7 +31,6 @@ async def analyze_meal_image(
     db: AsyncSession = Depends(get_db),
     gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> MealAnalysisResponse:
-
     service = MealService(db=db, gemini_service=gemini_service)
 
     try:
@@ -39,9 +38,7 @@ async def analyze_meal_image(
     except InvalidImageError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except ImageTooLargeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except GeminiServiceError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

@@ -8,10 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
 from app.models.food import Food
-from app.models.portion import PortionGuide
 from app.models.user import User
-from app.services.nutrition_service import NutritionService, convert_quantity_to_grams
-from app.services.portion_service import PortionService
+from app.services.nutrition_service import convert_quantity_to_grams
 
 
 @pytest.fixture
@@ -76,16 +74,18 @@ async def test_search_portions_endpoint(
     portions = res.json()
     assert len(portions) > 0
     labels = [p["label"] for p in portions]
-    assert any("katori dal" in l for l in labels)
-    assert any("roti" in l for l in labels)
-    assert any("slice pizza" in l for l in labels)
+    assert any("katori dal" in lbl for lbl in labels)
+    assert any("roti" in lbl for lbl in labels)
+    assert any("slice pizza" in lbl for lbl in labels)
 
     # 3. Search query filtering
     res_dal = await client.get("/api/v1/nutrition/portions?q=dal", headers=auth_headers)
     assert res_dal.status_code == 200
     dal_portions = res_dal.json()
     assert len(dal_portions) >= 1
-    assert all("dal" in p["food_canonical_name"] or "dal" in p["label"].lower() for p in dal_portions)
+    assert all(
+        "dal" in p["food_canonical_name"] or "dal" in p["label"].lower() for p in dal_portions
+    )
 
 
 @pytest.mark.asyncio
@@ -104,9 +104,7 @@ async def test_food_portions_endpoint(
     assert bad_res.status_code == 404
 
     # 2. Food with registered portions returns them
-    dal_res = await client.get(
-        f"/api/v1/nutrition/foods/{dal.id}/portions", headers=auth_headers
-    )
+    dal_res = await client.get(f"/api/v1/nutrition/foods/{dal.id}/portions", headers=auth_headers)
     assert dal_res.status_code == 200
     dal_portions = dal_res.json()
     assert len(dal_portions) >= 1

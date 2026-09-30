@@ -29,5 +29,3 @@ router.include_router(analysis.router)
 router.include_router(uploads.router)
 router.include_router(water.router)
 router.include_router(weight.router)
-
-

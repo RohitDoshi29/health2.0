@@ -76,5 +76,3 @@ class TrendsAnalyticsRead(BaseModel):
     average_fiber: float
     goal: GoalRead
     data_points: list[DailyTrendPoint]
-
-

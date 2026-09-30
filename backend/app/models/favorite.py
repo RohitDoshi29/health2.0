@@ -50,4 +50,3 @@ class FavoriteMeal(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<FavoriteMeal id={self.id} user_id={self.user_id} name={self.name!r}>"
-

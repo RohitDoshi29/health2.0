@@ -34,9 +34,7 @@ class WeightService:
         self.db.add(log)
 
         # Update latest weight on UserProfile if profile exists
-        prof_res = await self.db.execute(
-            select(UserProfile).where(UserProfile.user_id == user.id)
-        )
+        prof_res = await self.db.execute(select(UserProfile).where(UserProfile.user_id == user.id))
         profile = prof_res.scalar_one_or_none()
         if profile is not None:
             profile.weight_kg = round(data.weight_kg, 2)
@@ -67,9 +65,7 @@ class WeightService:
         logs = list(res.scalars().all())
 
         # 2. Fetch meals within range for calories overlay
-        meal_query = select(Meal).where(
-            Meal.user_id == user.id, Meal.created_at >= cutoff_dt
-        )
+        meal_query = select(Meal).where(Meal.user_id == user.id, Meal.created_at >= cutoff_dt)
         meal_res = await self.db.execute(meal_query)
         meals = list(meal_res.scalars().all())
 
@@ -193,9 +189,7 @@ class WeightService:
         latest_res = await self.db.execute(latest_query)
         new_latest = latest_res.scalar_one_or_none()
 
-        prof_res = await self.db.execute(
-            select(UserProfile).where(UserProfile.user_id == user.id)
-        )
+        prof_res = await self.db.execute(select(UserProfile).where(UserProfile.user_id == user.id))
         profile = prof_res.scalar_one_or_none()
         if profile is not None:
             if new_latest:

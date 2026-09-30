@@ -27,7 +27,6 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     firebase_uid: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
 
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -61,4 +60,3 @@ class User(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<User id={self.id} email={self.email!r}>"
-

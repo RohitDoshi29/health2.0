@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
@@ -60,4 +61,3 @@ async def seed_users() -> None:
 
 if __name__ == "__main__":
     asyncio.run(seed_users())
-

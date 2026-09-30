@@ -51,4 +51,3 @@ async def test_analyze_populates_image_url(client: AsyncClient) -> None:
     assert "image_url" in data
     assert data["image_url"] is not None
     assert data["image_url"].startswith("/uploads/meal_")
-

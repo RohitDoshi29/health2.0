@@ -164,4 +164,3 @@ async def google_or_firebase_auth(
 async def get_me(current_user: User = Depends(get_current_user)) -> UserRead:
     """Return the profile of the currently authenticated user."""
     return UserRead.model_validate(current_user)
-

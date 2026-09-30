@@ -41,5 +41,3 @@ class WaterGoalUpdate(BaseModel):
     water_target_ml: float = Field(
         ..., gt=0, le=10000, description="Daily target in milliliters, e.g. 2500"
     )
-
-

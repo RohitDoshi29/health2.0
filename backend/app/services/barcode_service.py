@@ -111,9 +111,7 @@ class BarcodeService:
 
         # 2. Macros
         protein = (
-            self._extract_nutrient(
-                nutriments, ["proteins_serving", "proteins_100g", "proteins"]
-            )
+            self._extract_nutrient(nutriments, ["proteins_serving", "proteins_100g", "proteins"])
             or 0.0
         )
         carbs = (

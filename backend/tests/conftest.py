@@ -114,4 +114,3 @@ async def test_user(db_session: AsyncSession) -> User:
 async def auth_headers(test_user: User) -> dict[str, str]:
     token = create_access_token(data={"sub": str(test_user.id), "email": test_user.email})
     return {"Authorization": f"Bearer {token}"}
-

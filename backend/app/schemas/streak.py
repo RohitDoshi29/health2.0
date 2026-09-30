@@ -40,7 +40,9 @@ class BadgeItem(BaseModel):
 
 
 class StreaksResponse(BaseModel):
-    current_streak: int = Field(..., description="Consecutive days >= 60 score ending yesterday or today")
+    current_streak: int = Field(
+        ..., description="Consecutive days >= 60 score ending yesterday or today"
+    )
     longest_streak: int = Field(..., description="Longest consecutive days >= 60 score")
     today_score: DailyScoreRead
     streak_active_today: bool = Field(..., description="Whether today has achieved >= 60 score")

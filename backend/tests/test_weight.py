@@ -1,6 +1,7 @@
 """Tests for body weight tracking, history analytics, and profile synchronization."""
 
 from datetime import UTC, datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession

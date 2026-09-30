@@ -130,16 +130,12 @@ async def test_unit_conversion_cups_and_bowls(
     service = NutritionService(db_session)
 
     # 1 cup = 240g of white rice (130 kcal / 100g * 240g = 312 kcal)
-    result_cup = await service.calculate_for_detection(
-        name="white rice", quantity=1.0, unit="cup"
-    )
+    result_cup = await service.calculate_for_detection(name="white rice", quantity=1.0, unit="cup")
     assert result_cup.matched_food is not None
     assert result_cup.calories == 312.0
 
     # 1 bowl = 350g of dal (116 kcal / 100g * 350g = 406 kcal)
-    result_bowl = await service.calculate_for_detection(
-        name="dal", quantity=1.0, unit="bowl"
-    )
+    result_bowl = await service.calculate_for_detection(name="dal", quantity=1.0, unit="bowl")
     assert result_bowl.matched_food is not None
     assert result_bowl.calories == 406.0
 
@@ -151,9 +147,7 @@ async def test_unit_conversion_pieces_and_tablespoons(
     service = NutritionService(db_session)
 
     # 2 whole boiled eggs (2 * 50g = 100g -> 155 kcal)
-    result_eggs = await service.calculate_for_detection(
-        name="egg", quantity=2.0, unit="piece"
-    )
+    result_eggs = await service.calculate_for_detection(name="egg", quantity=2.0, unit="piece")
     assert result_eggs.matched_food is not None
     assert result_eggs.calories == 155.0
     assert result_eggs.protein == 13.0
@@ -203,6 +197,3 @@ async def test_fuzzy_matching_steamed_basmati_rice_and_unrelated_rejection(
     # 2. Genuinely unrelated food returns None
     unrelated = await service.find_food_by_name("mystery food xyz")
     assert unrelated is None
-
-
-

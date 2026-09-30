@@ -5,10 +5,10 @@ matching pipeline and scales that record's per-serving nutrition based on
 quantity and food-specific culinary unit conversions.
 """
 
-from dataclasses import dataclass
 import logging
 import re
 import uuid
+from dataclasses import dataclass
 
 from rapidfuzz import fuzz, process
 from sqlalchemy import select
@@ -461,7 +461,9 @@ class NutritionService:
             food = result.scalar_one_or_none()
             if food is not None:
                 if not food.is_physically_valid:
-                    logger.warning("Rejecting invalid database food record: %s", food.canonical_name)
+                    logger.warning(
+                        "Rejecting invalid database food record: %s", food.canonical_name
+                    )
                     return None
                 return food
 
@@ -516,7 +518,9 @@ class NutritionService:
             best_match_key, _score, _ = match
             matched_food = choices[best_match_key]
             if not matched_food.is_physically_valid:
-                logger.warning("Rejecting invalid database food record: %s", matched_food.canonical_name)
+                logger.warning(
+                    "Rejecting invalid database food record: %s", matched_food.canonical_name
+                )
                 return None
             return matched_food
 

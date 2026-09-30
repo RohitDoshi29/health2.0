@@ -48,8 +48,7 @@ async def run_migrations_online() -> None:
 
     connect_args: dict[str, Any] = {}
     is_local_db = any(
-        host in settings.DATABASE_URL
-        for host in ("@localhost", "@127.0.0.1", "@db:")
+        host in settings.DATABASE_URL for host in ("@localhost", "@127.0.0.1", "@db:")
     )
     if not is_local_db:
         ctx = ssl.create_default_context()

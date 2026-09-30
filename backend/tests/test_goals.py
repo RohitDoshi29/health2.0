@@ -72,7 +72,7 @@ async def test_daily_analytics_with_logged_meal(
     assert data["consumed_calories"] == 500.0
     assert data["consumed_protein"] == 50.0
     assert data["calorie_progress"] == 0.25  # 500 / 2000
-    assert data["protein_progress"] == 0.5   # 50 / 100
+    assert data["protein_progress"] == 0.5  # 50 / 100
     assert data["meals_count"] == 1
     assert data["goal"]["calorie_target"] == 2000.0
 
@@ -139,5 +139,3 @@ async def test_trends_analytics(client: AsyncClient, auth_headers: dict[str, str
     assert data_30d["period"] == "30d"
     assert data_30d["days_count"] == 30
     assert len(data_30d["data_points"]) == 30
-
-

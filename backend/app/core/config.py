@@ -68,7 +68,6 @@ class Settings(BaseSettings):
     USDA_API_KEY: str = ""
     OPENFOODFACTS_ENABLED: bool = True
 
-
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]

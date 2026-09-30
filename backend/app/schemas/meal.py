@@ -2,11 +2,9 @@
 
 import uuid
 from datetime import datetime
-
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.schemas.analysis import QuantityUnit
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MealItemCreate(BaseModel):
@@ -75,7 +73,6 @@ class MealCreate(BaseModel):
     meal_type: str = "snack"
     created_at: datetime | None = None
     items: list[MealItemCreate] = Field(default_factory=list)
-
 
 
 class MealUpdate(BaseModel):

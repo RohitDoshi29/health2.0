@@ -1,6 +1,7 @@
 """Portion guide service for food portion reference weights and searches."""
 
 import uuid
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,12 +55,15 @@ class PortionService:
 
         if not portions:
             # Fallback: create a dynamic single serving portion from the food database record
-            serving_size = food.serving_size if food.serving_size and food.serving_size > 0 else 100.0
+            serving_size = (
+                food.serving_size if food.serving_size and food.serving_size > 0 else 100.0
+            )
             serving_unit = food.serving_unit or "g"
+            size_str = int(serving_size) if serving_size.is_integer() else serving_size
             dynamic_portion = PortionGuide(
                 id=uuid.uuid4(),
                 food_canonical_name=food.canonical_name,
-                label=f"1 serving ({int(serving_size) if serving_size.is_integer() else serving_size} {serving_unit})",
+                label=f"1 serving ({size_str} {serving_unit})",
                 grams=serving_size,
                 image_asset="assets/portions/piece.png",
             )
@@ -84,7 +88,9 @@ class PortionService:
                 .order_by(PortionGuide.food_canonical_name, PortionGuide.label)
             )
         else:
-            stmt = select(PortionGuide).order_by(PortionGuide.food_canonical_name, PortionGuide.label)
+            stmt = select(PortionGuide).order_by(
+                PortionGuide.food_canonical_name, PortionGuide.label
+            )
 
         result = await self.db.execute(stmt)
         return list(result.scalars().all())

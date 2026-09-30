@@ -134,9 +134,7 @@ class MealAnalysisResponse(BaseModel):
         default_factory=list,
         description="List of detected food item names that had no match in the nutrition database",
     )
-    image_url: str | None = Field(
-        default=None, description="Persisted image URL on the server"
-    )
+    image_url: str | None = Field(default=None, description="Persisted image URL on the server")
     verification_status: VerificationStatus = Field(
         default=VerificationStatus.VERIFIED,
         description="Overall verification verdict for the meal",

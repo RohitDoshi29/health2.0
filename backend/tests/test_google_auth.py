@@ -86,4 +86,3 @@ async def test_firebase_alias_endpoint(client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert data["user"]["email"] == "firebase_tester@example.com"
-

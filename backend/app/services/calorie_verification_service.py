@@ -6,8 +6,8 @@ anomaly detection, and source-priority resolution to deliver transparent, calibr
 and physically plausible caloric estimations.
 """
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from app.schemas.verification import (
@@ -294,9 +294,7 @@ class CalorieVerificationService:
             source_breakdown["barcode_label"] = item.barcode_calories
 
         # Check ingredient decomposition for composite dishes
-        decomp_cals, decomp_sources = cls.decompose_ingredients_calories(
-            item.food_name, item.grams
-        )
+        decomp_cals, decomp_sources = cls.decompose_ingredients_calories(item.food_name, item.grams)
         if decomp_cals is not None:
             sources_consulted.extend(decomp_sources)
             source_breakdown["ingredient_decomposition"] = decomp_cals
@@ -344,7 +342,11 @@ class CalorieVerificationService:
             discrepancy_pct = 100.0
 
         # 2. Unmatched food handling
-        elif not item.is_matched_in_db and item.barcode_calories is None and item.reference_usda_calories is None:
+        elif (
+            not item.is_matched_in_db
+            and item.barcode_calories is None
+            and item.reference_usda_calories is None
+        ):
             status = VerificationStatus.LOW_CONFIDENCE
             note = (
                 "Food not found in reference database. "
@@ -393,7 +395,9 @@ class CalorieVerificationService:
                 note = f"Corrected using USDA reference standard ({trusted_val} kcal)."
             elif diff_pct > 8.0:
                 status = VerificationStatus.VERIFIED_WITH_WARNING
-                note = f"Verified with moderate variance ({discrepancy_pct}%) against USDA reference."
+                note = (
+                    f"Verified with moderate variance ({discrepancy_pct}%) against USDA reference."
+                )
             else:
                 status = VerificationStatus.VERIFIED
                 note = "Verified against USDA FoodData Central reference standard."
@@ -450,7 +454,9 @@ class CalorieVerificationService:
             portion_confidence_raw=item.portion_confidence,
             unit=item.unit,
             is_matched_in_db=item.is_matched_in_db,
-            has_barcode_or_usda=(item.barcode_calories is not None or item.reference_usda_calories is not None),
+            has_barcode_or_usda=(
+                item.barcode_calories is not None or item.reference_usda_calories is not None
+            ),
             discrepancy_pct=discrepancy_pct,
             has_anomalies=bool(anomalies),
             is_zero_nutrition=(item.calories == 0.0 and item.protein == 0.0),
@@ -479,7 +485,12 @@ class CalorieVerificationService:
         overall_status = VerificationStatus.VERIFIED
 
         # Check total values
-        if total.estimated_calories < 0.0 or total.protein < 0.0 or total.carbohydrates < 0.0 or total.fat < 0.0:
+        if (
+            total.estimated_calories < 0.0
+            or total.protein < 0.0
+            or total.carbohydrates < 0.0
+            or total.fat < 0.0
+        ):
             warnings.append("Total meal contains negative nutrient values.")
             overall_status = VerificationStatus.NEEDS_CONFIRMATION
 
@@ -488,7 +499,9 @@ class CalorieVerificationService:
             total.protein, total.carbohydrates, total.fat, total.fiber
         )
         if total.estimated_calories > 20.0 and total_macro_cals > 0.0:
-            diff = abs(total.estimated_calories - total_macro_cals) / total.estimated_calories * 100.0
+            diff = (
+                abs(total.estimated_calories - total_macro_cals) / total.estimated_calories * 100.0
+            )
             if diff > 35.0:
                 warnings.append(
                     f"Overall meal calories diverge from total macronutrient calories by {diff:.1f}%."
@@ -499,10 +512,15 @@ class CalorieVerificationService:
         for item in items:
             v = getattr(item, "verification", None)
             if v:
-                if v.verification_status == VerificationStatus.NEEDS_CONFIRMATION and not getattr(item, "is_component", False):
+                if v.verification_status == VerificationStatus.NEEDS_CONFIRMATION and not getattr(
+                    item, "is_component", False
+                ):
                     overall_status = VerificationStatus.NEEDS_CONFIRMATION
                     warnings.append(f"Item '{item.name}' requires portion/nutrition confirmation.")
-                elif v.verification_status == VerificationStatus.VERIFIED_WITH_WARNING and overall_status == VerificationStatus.VERIFIED:
+                elif (
+                    v.verification_status == VerificationStatus.VERIFIED_WITH_WARNING
+                    and overall_status == VerificationStatus.VERIFIED
+                ):
                     overall_status = VerificationStatus.VERIFIED_WITH_WARNING
 
         return overall_status, warnings

@@ -76,8 +76,5 @@ async def update_water_goal(
 ) -> GoalRead:
     """Update daily water target goal in milliliters."""
     service = WaterService(db)
-    goal = await service.update_water_goal(
-        user_id=user_id, water_target_ml=payload.water_target_ml
-    )
+    goal = await service.update_water_goal(user_id=user_id, water_target_ml=payload.water_target_ml)
     return GoalRead.model_validate(goal)
-

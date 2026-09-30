@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.goal import Goal
 from app.models.meal import Meal
-from app.models.water_log import WaterLog
 from app.models.weight_log import WeightLog
 from app.services.weekly_service import WeeklyService
 
@@ -258,7 +257,9 @@ async def test_weekly_report_weight_change(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_get_weekly_report_endpoint(client: AsyncClient, auth_headers: dict[str, str]):
     """Test GET /api/v1/analytics/weekly endpoint."""
-    response = await client.get("/api/v1/analytics/weekly?week_offset=0&tz_offset=0", headers=auth_headers)
+    response = await client.get(
+        "/api/v1/analytics/weekly?week_offset=0&tz_offset=0", headers=auth_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert "start_date" in data

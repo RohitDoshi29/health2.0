@@ -17,8 +17,8 @@ Explicitly validates:
 import io
 from unittest.mock import AsyncMock
 
-from PIL import Image
 import pytest
+from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.food import Food
@@ -35,7 +35,6 @@ from app.services.calorie_verification_service import (
 from app.services.meal_service import MealService
 from app.services.nutrition_service import (
     NutritionService,
-    convert_quantity_to_grams,
 )
 
 
@@ -104,9 +103,7 @@ def test_screenshot_scenario_physically_impossible_result_rejected() -> None:
 
 
 def test_1_300g_pizza_reasonable_nutrition_range(pizza_db_food: Food) -> None:
-    res = NutritionService.calculate_nutrition_for_quantity(
-        pizza_db_food, quantity=300.0, unit="g"
-    )
+    res = NutritionService.calculate_nutrition_for_quantity(pizza_db_food, quantity=300.0, unit="g")
     # 280 kcal per 100g -> 840 kcal for 300g (within 700-900 kcal range)
     assert 700.0 <= res.calories <= 900.0
     assert 30.0 <= res.protein <= 45.0

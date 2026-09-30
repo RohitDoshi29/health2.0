@@ -13,9 +13,7 @@ def test_mifflin_st_jeor_bmr_calculation():
     assert abs(male_bmr - 1673.8) < 0.2
 
     # Female: 30yo, 55kg, 160cm -> 10*55 + 6.25*160 - 5*30 - 161 = 1239.0
-    female_bmr = ProfileService.calculate_bmr(
-        weight_kg=55.0, height_cm=160.0, age=30, sex="female"
-    )
+    female_bmr = ProfileService.calculate_bmr(weight_kg=55.0, height_cm=160.0, age=30, sex="female")
     assert abs(female_bmr - 1239.0) < 0.2
 
 
@@ -86,7 +84,9 @@ async def test_preview_profile_endpoint(client: AsyncClient, auth_headers: dict[
         "activity_level": "active",
         "goal": "lose",
     }
-    response = await client.post("/api/v1/users/me/profile/preview", json=payload, headers=auth_headers)
+    response = await client.post(
+        "/api/v1/users/me/profile/preview", json=payload, headers=auth_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["calorie_target"] > 0

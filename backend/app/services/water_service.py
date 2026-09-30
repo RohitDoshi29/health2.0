@@ -76,6 +76,7 @@ class WaterService:
         target_ml = await self._get_user_water_target(user_id)
 
         from datetime import timedelta
+
         start_date = today - timedelta(days=days - 1)
         start_dt = datetime.combine(start_date, time.min).replace(tzinfo=UTC)
 
@@ -137,4 +138,3 @@ class WaterService:
         await self.db.commit()
         await self.db.refresh(goal)
         return goal
-

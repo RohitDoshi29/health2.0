@@ -172,9 +172,7 @@ async def get_trends_analytics(
     start_dt = datetime.combine(start_date, time.min).replace(tzinfo=UTC) - timedelta(
         minutes=tz_offset
     )
-    end_dt = datetime.combine(today, time.max).replace(tzinfo=UTC) - timedelta(
-        minutes=tz_offset
-    )
+    end_dt = datetime.combine(today, time.max).replace(tzinfo=UTC) - timedelta(minutes=tz_offset)
 
     query = (
         select(Meal)
@@ -288,5 +286,3 @@ async def get_weekly_report(
     return await service.get_weekly_report(
         user_id=current_user.id, week_offset=week_offset, tz_offset=tz_offset
     )
-
-

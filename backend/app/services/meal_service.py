@@ -13,7 +13,6 @@ the task spec:
 import hashlib
 import logging
 import uuid
-
 from datetime import UTC, datetime, timedelta
 
 from fastapi import UploadFile
@@ -30,7 +29,6 @@ from app.schemas.analysis import (
 )
 from app.schemas.meal import MealCreate, MealUpdate, RecentFoodRead
 from app.schemas.nutrition import NutritionSummary
-from app.schemas.verification import VerificationStatus
 from app.services.calorie_verification_service import (
     CalorieVerificationService,
     VerificationInput,
@@ -52,50 +50,177 @@ _IMAGE_ANALYSIS_CACHE: dict[str, MealAnalysisResponse] = {}
 # Prevents double-counting child ingredients that are already constituents of the dish.
 COMPOSITE_DISH_COMPONENTS: dict[str, set[str]] = {
     "pizza": {
-        "cheese", "mozzarella", "mozzarella cheese", "tomato", "tomato sauce", "pizza sauce", "crust",
-        "pepper", "bell pepper", "green bell pepper", "red bell pepper", "capsicum",
-        "onion", "olives", "black olives", "mushroom", "mushrooms", "paneer",
-        "corn", "sweet corn", "jalapeno", "basil", "oregano", "pepperoni", "sausage",
+        "cheese",
+        "mozzarella",
+        "mozzarella cheese",
+        "tomato",
+        "tomato sauce",
+        "pizza sauce",
+        "crust",
+        "pepper",
+        "bell pepper",
+        "green bell pepper",
+        "red bell pepper",
+        "capsicum",
+        "onion",
+        "olives",
+        "black olives",
+        "mushroom",
+        "mushrooms",
+        "paneer",
+        "corn",
+        "sweet corn",
+        "jalapeno",
+        "basil",
+        "oregano",
+        "pepperoni",
+        "sausage",
     },
     "cheese_pizza": {
-        "cheese", "mozzarella", "mozzarella cheese", "tomato", "tomato sauce", "pizza sauce", "crust",
-        "pepper", "bell pepper", "green bell pepper", "red bell pepper", "capsicum",
-        "onion", "olives", "black olives", "mushroom", "mushrooms", "paneer",
-        "corn", "sweet corn", "jalapeno", "basil", "oregano", "pepperoni", "sausage",
+        "cheese",
+        "mozzarella",
+        "mozzarella cheese",
+        "tomato",
+        "tomato sauce",
+        "pizza sauce",
+        "crust",
+        "pepper",
+        "bell pepper",
+        "green bell pepper",
+        "red bell pepper",
+        "capsicum",
+        "onion",
+        "olives",
+        "black olives",
+        "mushroom",
+        "mushrooms",
+        "paneer",
+        "corn",
+        "sweet corn",
+        "jalapeno",
+        "basil",
+        "oregano",
+        "pepperoni",
+        "sausage",
     },
     "burger": {
-        "bun", "burger bun", "patty", "cheese", "cheddar cheese", "lettuce",
-        "tomato", "onion", "sauce", "mayo", "mayonnaise", "ketchup", "pickles",
+        "bun",
+        "burger bun",
+        "patty",
+        "cheese",
+        "cheddar cheese",
+        "lettuce",
+        "tomato",
+        "onion",
+        "sauce",
+        "mayo",
+        "mayonnaise",
+        "ketchup",
+        "pickles",
     },
     "cheeseburger": {
-        "bun", "burger bun", "patty", "cheese", "cheddar cheese", "lettuce",
-        "tomato", "onion", "sauce", "mayo", "mayonnaise", "ketchup", "pickles",
+        "bun",
+        "burger bun",
+        "patty",
+        "cheese",
+        "cheddar cheese",
+        "lettuce",
+        "tomato",
+        "onion",
+        "sauce",
+        "mayo",
+        "mayonnaise",
+        "ketchup",
+        "pickles",
     },
     "sandwich": {
-        "bread", "bread slice", "toast", "cheese", "butter", "lettuce",
-        "tomato", "cucumber", "onion", "mayo",
+        "bread",
+        "bread slice",
+        "toast",
+        "cheese",
+        "butter",
+        "lettuce",
+        "tomato",
+        "cucumber",
+        "onion",
+        "mayo",
     },
     "biryani": {
-        "rice", "basmati rice", "cooked basmati rice", "chicken", "meat", "mutton",
-        "paneer", "spices", "onion", "fried onion", "ghee", "yogurt", "raita",
+        "rice",
+        "basmati rice",
+        "cooked basmati rice",
+        "chicken",
+        "meat",
+        "mutton",
+        "paneer",
+        "spices",
+        "onion",
+        "fried onion",
+        "ghee",
+        "yogurt",
+        "raita",
     },
     "pav_bhaji": {
-        "bhaji", "mashed vegetables", "pav", "bread", "butter", "onion", "lemon", "coriander",
+        "bhaji",
+        "mashed vegetables",
+        "pav",
+        "bread",
+        "butter",
+        "onion",
+        "lemon",
+        "coriander",
     },
     "poha": {
-        "flattened rice", "poha", "peanuts", "onion", "potato", "curry leaves", "sev", "coriander",
+        "flattened rice",
+        "poha",
+        "peanuts",
+        "onion",
+        "potato",
+        "curry leaves",
+        "sev",
+        "coriander",
     },
     "pasta": {
-        "pasta", "spaghetti", "penne", "sauce", "tomato sauce", "cheese", "parmesan", "garlic", "olive oil",
+        "pasta",
+        "spaghetti",
+        "penne",
+        "sauce",
+        "tomato sauce",
+        "cheese",
+        "parmesan",
+        "garlic",
+        "olive oil",
     },
     "salad": {
-        "lettuce", "tomato", "cucumber", "onion", "carrot", "dressing", "olive oil", "croutons", "olives",
+        "lettuce",
+        "tomato",
+        "cucumber",
+        "onion",
+        "carrot",
+        "dressing",
+        "olive oil",
+        "croutons",
+        "olives",
     },
     "taco": {
-        "tortilla", "taco shell", "meat", "beef", "chicken", "cheese", "lettuce", "salsa", "sour cream",
+        "tortilla",
+        "taco shell",
+        "meat",
+        "beef",
+        "chicken",
+        "cheese",
+        "lettuce",
+        "salsa",
+        "sour cream",
     },
     "burrito": {
-        "tortilla", "rice", "beans", "black beans", "meat", "cheese", "salsa",
+        "tortilla",
+        "rice",
+        "beans",
+        "black beans",
+        "meat",
+        "cheese",
+        "salsa",
     },
 }
 
@@ -242,9 +367,7 @@ class MealService:
                 else None
             )
             ref_f = (
-                round(nutrition.reference_fat, 2)
-                if is_matched and nutrition.matched_food
-                else None
+                round(nutrition.reference_fat, 2) if is_matched and nutrition.matched_food else None
             )
             ref_fib = (
                 round(nutrition.reference_fiber, 2)
@@ -349,6 +472,7 @@ class MealService:
         if payload.created_at is not None:
             if payload.created_at.tzinfo is None:
                 from datetime import UTC
+
                 meal.created_at = payload.created_at.replace(tzinfo=UTC)
             else:
                 meal.created_at = payload.created_at
@@ -414,10 +538,8 @@ class MealService:
         await self.db.delete(meal)
         await self.db.commit()
 
-    async def get_recent_foods(
-        self, user_id: uuid.UUID, limit: int = 20
-    ) -> list[RecentFoodRead]:
-        """Return deduplicated food names recently logged by the user with their last-used portion & macros."""
+    async def get_recent_foods(self, user_id: uuid.UUID, limit: int = 20) -> list[RecentFoodRead]:
+        """Return deduplicated food names recently logged by the user with last-used macros."""
         query = (
             select(MealItem, Meal.created_at.label("meal_created_at"))
             .join(Meal, MealItem.meal_id == Meal.id)
@@ -454,10 +576,8 @@ class MealService:
 
         return recent_foods
 
-    async def relog_meal(
-        self, meal_id: uuid.UUID, user_id: uuid.UUID, tz_offset: int = 0
-    ) -> Meal:
-        """Create a duplicate meal with exact same items and weights, logged now with time-based meal_type."""
+    async def relog_meal(self, meal_id: uuid.UUID, user_id: uuid.UUID, tz_offset: int = 0) -> Meal:
+        """Create a duplicate meal with exact same items and weights, logged now."""
         original = await self.get_meal(meal_id, user_id=user_id)
 
         client_now = datetime.now(UTC) + timedelta(minutes=tz_offset)

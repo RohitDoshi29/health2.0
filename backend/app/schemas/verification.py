@@ -5,6 +5,7 @@ Defines verification status, multi-source corroboration details,
 """
 
 from enum import Enum
+
 from pydantic import BaseModel, Field
 
 
@@ -21,10 +22,18 @@ class VerificationStatus(str, Enum):
 class ConfidenceBreakdown(BaseModel):
     """Separate confidences for food ID, portion sizing, and nutrition data (0-100 scale)."""
 
-    food_confidence: float = Field(ge=0.0, le=100.0, description="Confidence of visual food identification")
-    portion_confidence: float = Field(ge=0.0, le=100.0, description="Confidence of portion & volume estimation")
-    nutrition_confidence: float = Field(ge=0.0, le=100.0, description="Confidence of reference nutrition data")
-    overall_confidence: float = Field(ge=0.0, le=100.0, description="Weighted composite confidence score")
+    food_confidence: float = Field(
+        ge=0.0, le=100.0, description="Confidence of visual food identification"
+    )
+    portion_confidence: float = Field(
+        ge=0.0, le=100.0, description="Confidence of portion & volume estimation"
+    )
+    nutrition_confidence: float = Field(
+        ge=0.0, le=100.0, description="Confidence of reference nutrition data"
+    )
+    overall_confidence: float = Field(
+        ge=0.0, le=100.0, description="Weighted composite confidence score"
+    )
 
 
 class VerificationDetail(BaseModel):
@@ -32,7 +41,9 @@ class VerificationDetail(BaseModel):
 
     final_calories: float = Field(ge=0.0, description="Verified calories to display/log")
     original_calories: float = Field(description="Original estimate before verification")
-    macro_derived_calories: float = Field(ge=0.0, description="Independently computed calories via Atwater 4-9-4")
+    macro_derived_calories: float = Field(
+        ge=0.0, description="Independently computed calories via Atwater 4-9-4"
+    )
     verification_status: VerificationStatus
     confidence_score: float = Field(ge=0.0, le=100.0, description="Overall confidence (0-100)")
     confidence_breakdown: ConfidenceBreakdown

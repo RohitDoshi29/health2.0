@@ -9,8 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.goal import Goal
 from app.models.meal import Meal
-from app.models.meal_item import MealItem
-from app.models.water_log import WaterLog
 from app.services.streak_service import StreakService, calculate_daily_score
 
 
@@ -19,8 +17,8 @@ def test_score_calculation_all_targets_met():
     score, breakdown = calculate_daily_score(
         calories=2000.0,
         protein=110.0,  # >= 108g (90% of 120g)
-        fiber=25.0,     # >= 24g (80% of 30g)
-        water_ml=2500.0,# >= 2500ml (100% of 2500ml)
+        fiber=25.0,  # >= 24g (80% of 30g)
+        water_ml=2500.0,  # >= 2500ml (100% of 2500ml)
         calorie_target=2000.0,
         protein_target=120.0,
         fiber_target=30.0,
@@ -64,31 +62,43 @@ def test_score_calculation_boundary_values():
     """Verify strict boundary values for each category."""
     # Calorie target 2000: ±10% range is [1800.0, 2200.0]
     # Lower boundary met
-    s, b = calculate_daily_score(calories=1800.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0)
+    s, b = calculate_daily_score(
+        calories=1800.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0
+    )
     assert b.calories.achieved is True
     assert s == 40
 
     # Upper boundary met
-    s, b = calculate_daily_score(calories=2200.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0)
+    s, b = calculate_daily_score(
+        calories=2200.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0
+    )
     assert b.calories.achieved is True
     assert s == 40
 
     # Just below lower boundary
-    s, b = calculate_daily_score(calories=1799.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0)
+    s, b = calculate_daily_score(
+        calories=1799.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0
+    )
     assert b.calories.achieved is False
     assert s == 0
 
     # Just above upper boundary
-    s, b = calculate_daily_score(calories=2201.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0)
+    s, b = calculate_daily_score(
+        calories=2201.0, protein=0, fiber=0, water_ml=0, calorie_target=2000.0
+    )
     assert b.calories.achieved is False
     assert s == 0
 
     # Protein target 100: >= 90% is 90.0g
-    s, b = calculate_daily_score(calories=0, protein=90.0, fiber=0, water_ml=0, protein_target=100.0)
+    s, b = calculate_daily_score(
+        calories=0, protein=90.0, fiber=0, water_ml=0, protein_target=100.0
+    )
     assert b.protein.achieved is True
     assert s == 30
 
-    s, b = calculate_daily_score(calories=0, protein=89.9, fiber=0, water_ml=0, protein_target=100.0)
+    s, b = calculate_daily_score(
+        calories=0, protein=89.9, fiber=0, water_ml=0, protein_target=100.0
+    )
     assert b.protein.achieved is False
     assert s == 0
 
@@ -102,11 +112,15 @@ def test_score_calculation_boundary_values():
     assert s == 0
 
     # Water target 2500: >= 100% is 2500.0ml
-    s, b = calculate_daily_score(calories=0, protein=0, fiber=0, water_ml=2500.0, water_target_ml=2500.0)
+    s, b = calculate_daily_score(
+        calories=0, protein=0, fiber=0, water_ml=2500.0, water_target_ml=2500.0
+    )
     assert b.water.achieved is True
     assert s == 15
 
-    s, b = calculate_daily_score(calories=0, protein=0, fiber=0, water_ml=2499.0, water_target_ml=2500.0)
+    s, b = calculate_daily_score(
+        calories=0, protein=0, fiber=0, water_ml=2499.0, water_target_ml=2500.0
+    )
     assert b.water.achieved is False
     assert s == 0
 

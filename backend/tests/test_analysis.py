@@ -116,4 +116,3 @@ def test_gemini_service_parses_bounding_boxes() -> None:
     assert service._parse_bounding_box([0.8, 0.2, 0.1, 0.8]) is None
     assert service._parse_bounding_box(None) is None
     assert service._parse_bounding_box("not-a-box") is None
-
