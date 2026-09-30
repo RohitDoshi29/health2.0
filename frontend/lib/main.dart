@@ -12,6 +12,7 @@ import 'ui/features/onboarding/onboarding_view.dart';
 import 'ui/features/onboarding/onboarding_view_model.dart';
 import 'ui/features/scan/scan_view_model.dart';
 import 'ui/features/water/water_view_model.dart';
+import 'ui/features/weight/weight_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,7 @@ class HeathifyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => ScanViewModel()),
         ChangeNotifierProvider(create: (_) => WaterViewModel()..loadTodaySummary()),
+        ChangeNotifierProvider(create: (_) => WeightViewModel()),
       ],
       child: MaterialApp(
         title: 'Heathify',

@@ -5,6 +5,7 @@ import '../../core/widgets/macro_progress_ring.dart';
 import '../../core/widgets/nutrition_trends_chart.dart';
 import '../../core/widgets/favorites_sheet.dart';
 import '../../core/widgets/water_tracker_card.dart';
+import '../../core/widgets/weight_tracker_card.dart';
 import '../../../data/services/sync_manager.dart';
 import '../auth/auth_view_model.dart';
 import '../history/history_view.dart';
@@ -484,6 +485,10 @@ class _DashboardTab extends StatelessWidget {
 
               // Hydration Tracker Card
               const WaterTrackerCard(),
+              const SizedBox(height: 16),
+
+              // Weight Tracker Card
+              const WeightTrackerCard(),
               const SizedBox(height: 24),
 
               // Recent Meals Header

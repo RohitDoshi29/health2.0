@@ -27,6 +27,8 @@ class ApiConstants {
   static const String waterGoal = '/api/v1/water/goal';
   static const String profile = '/api/v1/users/me/profile';
   static const String profilePreview = '/api/v1/users/me/profile/preview';
+  static const String weight = '/api/v1/weight';
+  static const String weightHistory = '/api/v1/weight/history';
 }
 
 

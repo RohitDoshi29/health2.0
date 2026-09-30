@@ -53,6 +53,9 @@ class User(Base):
     profile: Mapped["UserProfile | None"] = relationship(  # noqa: F821
         "UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    weight_logs: Mapped[list["WeightLog"]] = relationship(  # noqa: F821
+        "WeightLog", back_populates="user", cascade="all, delete-orphan"
+    )
 
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

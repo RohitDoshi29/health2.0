@@ -13,6 +13,7 @@ from app.api.v1 import (
     uploads,
     users,
     water,
+    weight,
 )
 
 router = APIRouter(prefix="/v1")
@@ -27,5 +28,6 @@ router.include_router(nutrition.router)
 router.include_router(analysis.router)
 router.include_router(uploads.router)
 router.include_router(water.router)
+router.include_router(weight.router)
 
 
