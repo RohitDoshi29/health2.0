@@ -14,6 +14,7 @@ import 'ui/features/scan/scan_view_model.dart';
 import 'ui/features/water/water_view_model.dart';
 import 'ui/features/weight/weight_view_model.dart';
 import 'ui/features/streak/streak_view_model.dart';
+import 'ui/features/weekly/weekly_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,7 @@ class HeathifyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WaterViewModel()..loadTodaySummary()),
         ChangeNotifierProvider(create: (_) => WeightViewModel()),
         ChangeNotifierProvider(create: (_) => StreakViewModel()..loadStreaks()),
+        ChangeNotifierProvider(create: (_) => WeeklyViewModel()),
       ],
       child: MaterialApp(
         title: 'Heathify',

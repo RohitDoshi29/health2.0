@@ -30,6 +30,7 @@ class ApiConstants {
   static const String weight = '/api/v1/weight';
   static const String weightHistory = '/api/v1/weight/history';
   static const String streaks = '/api/v1/analytics/streaks';
+  static const String weeklyReport = '/api/v1/analytics/weekly';
 }
 
 

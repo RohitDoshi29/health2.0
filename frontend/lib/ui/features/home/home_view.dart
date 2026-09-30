@@ -15,6 +15,7 @@ import '../manual/manual_food_entry_view.dart';
 import '../scan/scan_view.dart';
 import '../settings/info_view.dart';
 import '../settings/settings_view.dart';
+import '../weekly/weekly_view.dart';
 import 'home_view_model.dart';
 
 class HomeView extends StatefulWidget {
@@ -423,7 +424,67 @@ class _DashboardTab extends StatelessWidget {
                 isLoading: homeVm.isTrendsLoading,
                 onPeriodChanged: (days) => homeVm.loadTrends(days),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+
+              // Weekly Nutrition Report Card
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const WeeklyView()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.assessment_rounded, color: AppTheme.primaryDark, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Weekly Nutrition Report',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Compare weeks, compliance & best days',
+                              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // Quick Log Action Cards Row
               Row(

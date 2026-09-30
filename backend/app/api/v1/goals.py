@@ -18,7 +18,9 @@ from app.schemas.goal import (
     TrendsAnalyticsRead,
 )
 from app.schemas.streak import StreaksResponse
+from app.schemas.weekly import WeeklyReportResponse
 from app.services.streak_service import StreakService
+from app.services.weekly_service import WeeklyService
 
 router = APIRouter(tags=["goals & analytics"])
 
@@ -268,5 +270,23 @@ async def get_streaks_and_badges(
     """Calculate the user's current streak, longest streak, daily score with breakdown, and badges."""
     service = StreakService(db)
     return await service.get_user_streaks_and_badges(current_user.id, tz_offset=tz_offset)
+
+
+@router.get("/analytics/weekly", response_model=WeeklyReportResponse)
+async def get_weekly_report(
+    week_offset: int = Query(
+        default=0, description="Week offset from current week (0 = this week, -1 = last week)"
+    ),
+    tz_offset: int = Query(
+        default=0, description="Timezone offset in minutes from UTC (e.g. 330 for IST UTC+5:30)"
+    ),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> WeeklyReportResponse:
+    """Generate weekly nutrition, score, nutrient compliance, and prior-week comparison report."""
+    service = WeeklyService(db)
+    return await service.get_weekly_report(
+        user_id=current_user.id, week_offset=week_offset, tz_offset=tz_offset
+    )
 
 

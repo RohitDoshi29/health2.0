@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/trend_model.dart';
+import '../../features/weekly/weekly_view.dart';
 
 class NutritionTrendsChart extends StatefulWidget {
   final TrendsAnalyticsModel? trends;
@@ -279,6 +280,39 @@ class _NutritionTrendsChartState extends State<NutritionTrendsChart> {
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WeeklyView()),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.assessment_rounded, size: 16, color: AppTheme.primaryDark),
+                    SizedBox(width: 8),
+                    Text(
+                      'View Detailed Weekly Report',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryDark,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primaryDark),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),
