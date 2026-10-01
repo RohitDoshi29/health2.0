@@ -52,16 +52,16 @@ class _NutritionTrendsChartState extends State<NutritionTrendsChart> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: const Color(0xCC111C17),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Color(0x22000000),
+            blurRadius: 14,
+            offset: Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0x2200F59B)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,8 +80,9 @@ class _NutritionTrendsChartState extends State<NutritionTrendsChart> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: const Color(0xFF16231D),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x2200F59B)),
                 ),
                 padding: const EdgeInsets.all(3),
                 child: Row(
@@ -99,7 +100,7 @@ class _NutritionTrendsChartState extends State<NutritionTrendsChart> {
             const SizedBox(
               height: 220,
               child: Center(
-                child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                child: CircularProgressIndicator(color: AppTheme.neonEmerald),
               ),
             )
           else ...[
@@ -107,9 +108,9 @@ class _NutritionTrendsChartState extends State<NutritionTrendsChart> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: const Color(0xFF16231D),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF3F4F6)),
+                border: Border.all(color: const Color(0x2200F59B)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,

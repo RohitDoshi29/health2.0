@@ -46,9 +46,11 @@ class HeathifyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WeeklyViewModel()),
       ],
       child: MaterialApp(
-        title: 'Heathify',
+        title: 'Healthify',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.darkTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark,
         home: const _RootScreen(),
       ),
     );
@@ -64,7 +66,7 @@ class _RootScreen extends StatelessWidget {
 
     if (authVm.isLoading) {
       return const Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.background,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -72,9 +74,9 @@ class _RootScreen extends StatelessWidget {
               Icon(Icons.spa_rounded, size: 64, color: AppTheme.primaryGreen),
               SizedBox(height: 16),
               Text(
-                'Heathify',
+                'Healthify',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                   letterSpacing: -0.5,

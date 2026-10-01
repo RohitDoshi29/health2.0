@@ -254,13 +254,13 @@ class DailyScoreCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xCC111C17),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0x2200F59B)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
+            color: Color(0x22000000),
+            blurRadius: 12,
             offset: Offset(0, 4),
           ),
         ],
@@ -287,7 +287,7 @@ class DailyScoreCard extends StatelessWidget {
                         child: CircularProgressIndicator(
                           value: progress,
                           strokeWidth: 7,
-                          backgroundColor: const Color(0xFFF3F4F6),
+                          backgroundColor: const Color(0x22FFFFFF),
                           color: scoreColor,
                         ),
                       ),
@@ -375,10 +375,10 @@ class DailyScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: achieved ? const Color(0xFFECFDF5) : const Color(0xFFF3F4F6),
+        color: achieved ? const Color(0x2200F59B) : const Color(0x16FFFFFF),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: achieved ? const Color(0xFFA7F3D0) : const Color(0xFFE5E7EB),
+          color: achieved ? const Color(0x4400F59B) : const Color(0x1FFFFFFF),
         ),
       ),
       child: Row(
@@ -387,7 +387,7 @@ class DailyScoreCard extends StatelessWidget {
           Icon(
             achieved ? Icons.check : Icons.remove,
             size: 11,
-            color: achieved ? const Color(0xFF059669) : const Color(0xFF9CA3AF),
+            color: achieved ? AppTheme.neonEmerald : const Color(0xFF9CA3AF),
           ),
           const SizedBox(width: 3),
           Text(
@@ -395,7 +395,7 @@ class DailyScoreCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: achieved ? const Color(0xFF065F46) : const Color(0xFF6B7280),
+              color: achieved ? AppTheme.neonEmerald : const Color(0xFF9CA3AF),
             ),
           ),
         ],

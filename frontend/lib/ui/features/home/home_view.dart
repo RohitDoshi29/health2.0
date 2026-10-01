@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../core/widgets/macro_progress_ring.dart';
+import '../../core/widgets/glass_card.dart';
+import '../../core/widgets/nutrition_orbit.dart';
+import '../../core/widgets/floating_food_widget.dart';
 import '../../core/widgets/nutrition_trends_chart.dart';
 import '../../core/widgets/favorites_sheet.dart';
 import '../../core/widgets/water_tracker_card.dart';
@@ -44,15 +46,18 @@ class _HomeViewState extends State<HomeView> {
     final screens = [
       const InfoView(),
       const ScanView(),
-      const _DashboardTab(),
+      const _CockpitDashboardView(),
       const HistoryView(),
       const SettingsView(),
     ];
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       body: screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
+        backgroundColor: const Color(0xE6080D0B),
+        indicatorColor: const Color(0x3300F59B),
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
@@ -67,27 +72,27 @@ class _HomeViewState extends State<HomeView> {
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info, color: AppTheme.primaryDark),
+            selectedIcon: Icon(Icons.info, color: AppTheme.neonEmerald),
             label: 'Info',
           ),
           NavigationDestination(
             icon: Icon(Icons.camera_alt_outlined),
-            selectedIcon: Icon(Icons.camera_alt, color: AppTheme.primaryDark),
+            selectedIcon: Icon(Icons.camera_alt, color: AppTheme.neonEmerald),
             label: 'Scan Food',
           ),
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: AppTheme.primaryDark),
+            selectedIcon: Icon(Icons.home, color: AppTheme.neonEmerald),
             label: 'Home',
           ),
           NavigationDestination(
             icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: AppTheme.primaryDark),
+            selectedIcon: Icon(Icons.history, color: AppTheme.neonEmerald),
             label: 'History',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: AppTheme.primaryDark),
+            selectedIcon: Icon(Icons.settings, color: AppTheme.neonEmerald),
             label: 'Settings',
           ),
         ],
@@ -96,8 +101,8 @@ class _HomeViewState extends State<HomeView> {
   }
 }
 
-class _DashboardTab extends StatelessWidget {
-  const _DashboardTab();
+class _CockpitDashboardView extends StatelessWidget {
+  const _CockpitDashboardView();
 
   void _showEditGoalsSheet(BuildContext context, HomeViewModel homeVm) {
     final goal = homeVm.goal;
@@ -120,8 +125,9 @@ class _DashboardTab extends StatelessWidget {
             bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 24,
           ),
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: Color(0xFF0F1814),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: Color(0x3300F59B), width: 1.5)),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -137,10 +143,11 @@ class _DashboardTab extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, color: AppTheme.textSecondary),
                       onPressed: () => Navigator.pop(modalCtx),
                     ),
                   ],
@@ -163,13 +170,16 @@ class _DashboardTab extends StatelessWidget {
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
+                      backgroundColor: AppTheme.neonEmerald,
+                      foregroundColor: const Color(0xFF041A0E),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
+                      elevation: 4,
+                      shadowColor: const Color(0x6600F59B),
                     ),
                     onPressed: () async {
                       final cal = double.tryParse(calCtrl.text.trim());
@@ -190,7 +200,7 @@ class _DashboardTab extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Nutrition goals updated!'),
-                            backgroundColor: AppTheme.primaryGreen,
+                            backgroundColor: AppTheme.primaryDark,
                           ),
                         );
                       }
@@ -200,7 +210,6 @@ class _DashboardTab extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -222,19 +231,22 @@ class _DashboardTab extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: accentColor, size: 20),
+        filled: true,
+        fillColor: const Color(0xFF16231D),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0x2200F59B)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0x2200F59B)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: accentColor, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -249,12 +261,18 @@ class _DashboardTab extends StatelessWidget {
     final syncMgr = context.watch<SyncManager>();
     final streakVm = Provider.of<StreakViewModel?>(context);
 
+    final rawName = authVm.currentUser?.name.trim() ?? '';
+    final firstName = rawName.isNotEmpty ? rawName.split(' ').first : 'Friend';
+
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Heathify Dashboard'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.only(right: 16),
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
@@ -264,17 +282,22 @@ class _DashboardTab extends StatelessWidget {
               },
               child: Tooltip(
                 message: 'Profile & Settings',
-                child: CircleAvatar(
-                  radius: 17,
-                  backgroundColor: AppTheme.primaryLight,
-                  child: Text(
-                    (authVm.currentUser?.name.isNotEmpty == true)
-                        ? authVm.currentUser!.name[0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryDark,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.neonEmerald.withValues(alpha: 0.5), width: 1.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 17,
+                    backgroundColor: const Color(0xFF162A20),
+                    child: Text(
+                      rawName.isNotEmpty ? rawName[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neonEmerald,
+                      ),
                     ),
                   ),
                 ),
@@ -283,489 +306,510 @@ class _DashboardTab extends StatelessWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await homeVm.loadMeals();
-          if (context.mounted) {
-            try {
-              await Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
-            } catch (_) {}
-          }
-        },
-        color: AppTheme.primaryGreen,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Offline Sync Status Banner
-              if (syncMgr.pendingCount > 0) ...[
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.cloud_off, color: Color(0xFFD97706), size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '${syncMgr.pendingCount} meal${syncMgr.pendingCount == 1 ? "" : "s"} saved offline',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF92400E),
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: syncMgr.isSyncing
-                            ? null
-                            : () async {
-                                final count = await syncMgr.syncPendingActions();
-                                if (context.mounted && count > 0) {
-                                  context.read<HomeViewModel>().loadMeals();
-                                }
-                              },
-                        child: syncMgr.isSyncing
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
-                              )
-                            : const Text(
-                                'Sync Now',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFD97706),
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // User Greeting & Streak Flame Chip
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.4),
+            radius: 1.2,
+            colors: [
+              Color(0xFF0F241A),
+              Color(0xFF080D0B),
+            ],
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await homeVm.loadMeals();
+            if (context.mounted) {
+              try {
+                await Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
+              } catch (_) {}
+            }
+          },
+          color: AppTheme.neonEmerald,
+          backgroundColor: AppTheme.surface,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Offline Sync Status Banner
+                if (syncMgr.pendingCount > 0) ...[
+                  GlassCard(
+                    glowColor: const Color(0xFFF59E0B),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
                       children: [
-                        Text(
-                          'Hello, ${authVm.currentUser?.name.split(" ").first ?? "Friend"} 👋',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                        const Icon(Icons.cloud_off, color: Color(0xFFF59E0B), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${syncMgr.pendingCount} meal${syncMgr.pendingCount == 1 ? "" : "s"} saved offline',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFCD34D),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          "Here is your nutrition summary for today",
-                          style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+                        TextButton(
+                          onPressed: syncMgr.isSyncing
+                              ? null
+                              : () async {
+                                  final count = await syncMgr.syncPendingActions();
+                                  if (context.mounted && count > 0) {
+                                    context.read<HomeViewModel>().loadMeals();
+                                  }
+                                },
+                          child: syncMgr.isSyncing
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF59E0B)),
+                                )
+                              : const Text(
+                                  'Sync Now',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFFCD34D),
+                                  ),
+                                ),
                         ),
                       ],
                     ),
                   ),
-                  if (streakVm != null) ...[
-                    Container(
-                      margin: const EdgeInsets.only(top: 2),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFED7AA)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 14),
+                ],
+
+                // Futuristic Greeting Header & Streak Glow Pill
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('🔥', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 4),
                           Text(
-                            '${streakVm.currentStreak} day${streakVm.currentStreak == 1 ? "" : "s"}',
+                            'Good evening, $firstName 👋',
                             style: const TextStyle(
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Color(0xFFC2410C),
+                              color: AppTheme.textPrimary,
+                              letterSpacing: -0.5,
                             ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Let's make today count.",
+                            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Daily Health Score Ring Card
-              const DailyScoreCard(),
-              const SizedBox(height: 20),
-
-              // Daily Macro Progress & Ring Card
-              MacroProgressRing(
-                analytics: homeVm.analytics,
-                onEditGoals: () => _showEditGoalsSheet(context, homeVm),
-              ),
-              const SizedBox(height: 24),
-
-              // Nutrition Trends & History Chart
-              NutritionTrendsChart(
-                trends: homeVm.trends,
-                selectedDays: homeVm.trendDays,
-                isLoading: homeVm.isTrendsLoading,
-                onPeriodChanged: (days) => homeVm.loadTrends(days),
-              ),
-              const SizedBox(height: 20),
-
-              // Weekly Nutrition Report Card
-              InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const WeeklyView()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
+                    if (streakVm != null) ...[
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0x33FF6B00),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0x88FF8A00)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0x44FF8A00),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.assessment_rounded, color: AppTheme.primaryDark, size: 22),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            const Text('🔥', style: TextStyle(fontSize: 14)),
+                            const SizedBox(width: 5),
                             Text(
-                              'Weekly Nutrition Report',
-                              style: TextStyle(
-                                fontSize: 14,
+                              '${streakVm.currentStreak} day${streakVm.currentStreak == 1 ? "" : "s"}',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
+                                fontSize: 13,
+                                color: Color(0xFFFFB366),
                               ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Compare weeks, compliance & best days',
-                              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
                     ],
-                  ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-              // Quick Log Action Cards Row
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => FavoritesSheet(
-                            onMealLogged: () => homeVm.loadMeals(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBEB),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                            ),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Favorites',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Color(0xFF92400E),
-                                    ),
-                                  ),
-                                  Text(
-                                    '1-tap quick log',
-                                    style: TextStyle(fontSize: 10, color: Color(0xFFB45309)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        final logged = await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ManualFoodEntryView()),
-                        );
-                        if (logged == true) {
-                          homeVm.loadDashboard();
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.edit_note_rounded, color: Color(0xFF2563EB), size: 18),
-                            ),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Manual Entry',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Color(0xFF1E40AF),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Custom values',
-                                    style: TextStyle(fontSize: 10, color: Color(0xFF3B82F6)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                // 3D Nutrition Orbit Cockpit
+                NutritionOrbit(
+                  currentCalories: homeVm.analytics?.consumedCalories ?? 0,
+                  targetCalories: homeVm.goal?.calorieTarget ?? 2000,
+                  currentProtein: homeVm.analytics?.consumedProtein ?? 0,
+                  targetProtein: homeVm.goal?.proteinTarget ?? 120,
+                  currentCarbs: homeVm.analytics?.consumedCarbohydrates ?? 0,
+                  targetCarbs: homeVm.goal?.carbohydratesTarget ?? 250,
+                  currentFat: homeVm.analytics?.consumedFat ?? 0,
+                  targetFat: homeVm.goal?.fatTarget ?? 65,
+                  currentFiber: homeVm.analytics?.consumedFiber ?? 0,
+                  targetFiber: homeVm.goal?.fiberTarget ?? 30,
+                  onTap: () => _showEditGoalsSheet(context, homeVm),
+                ),
+                const SizedBox(height: 20),
 
-              // Hydration Tracker Card
-              const WaterTrackerCard(),
-              const SizedBox(height: 16),
+                // Floating 3D Signature Food Object Widget
+                const FloatingFoodWidget(),
+                const SizedBox(height: 20),
 
-              // Weight Tracker Card
-              const WeightTrackerCard(),
-              const SizedBox(height: 24),
+                // Daily Health Score Cockpit Card
+                const DailyScoreCard(),
+                const SizedBox(height: 20),
 
-              // Recent Meals Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Recent Meals',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '${homeVm.meals.length} total',
-                    style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+                // Nutrition Trends Interactive Wave Chart
+                NutritionTrendsChart(
+                  trends: homeVm.trends,
+                  selectedDays: homeVm.trendDays,
+                  isLoading: homeVm.isTrendsLoading,
+                  onPeriodChanged: (days) => homeVm.loadTrends(days),
+                ),
+                const SizedBox(height: 20),
 
-              if (homeVm.isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (homeVm.meals.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: const Text(
-                    'No meals logged yet today.\nTap "Scan Food" to get started!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textSecondary, height: 1.4),
-                  ),
-                )
-              else
-                ...homeVm.meals.take(5).map((meal) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
+                // Weekly Nutrition Report Cockpit Card
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const WeeklyView()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: GlassCard(
+                    glowColor: AppTheme.neonEmerald,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0x2200F59B),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0x4400F59B)),
+                          ),
+                          child: const Icon(Icons.assessment_rounded, color: AppTheme.neonEmerald, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    meal.mealType.toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryDark,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  InkWell(
-                                    onTap: () async {
-                                      try {
-                                        final newMeal = await homeVm.relogMeal(meal.id);
-                                        if (context.mounted) {
-                                          final label = newMeal.mealType.isNotEmpty
-                                              ? '${newMeal.mealType[0].toUpperCase()}${newMeal.mealType.substring(1)}'
-                                              : 'Meal';
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Logged $label again!'),
-                                              action: SnackBarAction(
-                                                label: 'Undo',
-                                                onPressed: () => homeVm.deleteMeal(newMeal.id),
-                                              ),
-                                              duration: const Duration(seconds: 4),
-                                            ),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Could not relog meal: $e')),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryLight,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.replay_rounded, size: 12, color: AppTheme.primaryDark),
-                                          SizedBox(width: 3),
-                                          Text(
-                                            'Log again',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
                               Text(
-                                meal.items.map((i) => i.foodName).join(', '),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                'Weekly Nutrition Report',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
                                   color: AppTheme.textPrimary,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Compare weeks, compliance & best days',
+                                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${meal.totalCalories.toStringAsFixed(0)} kcal',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textSecondary),
                       ],
                     ),
-                  );
-                }),
-            ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Quick Log Action Cards Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => FavoritesSheet(
+                              onMealLogged: () => homeVm.loadMeals(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(18),
+                        child: GlassCard(
+                          glowColor: Colors.amber,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Color(0x33FFB300),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Favorites',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      '1-tap quick log',
+                                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final logged = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ManualFoodEntryView()),
+                          );
+                          if (logged == true) {
+                            homeVm.loadDashboard();
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(18),
+                        child: GlassCard(
+                          glowColor: const Color(0xFF00B2FF),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Color(0x3300B2FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.edit_note_rounded, color: Color(0xFF00B2FF), size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Manual Entry',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Custom values',
+                                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Hydration Tracker Cockpit Card
+                const WaterTrackerCard(),
+                const SizedBox(height: 16),
+
+                // Weight Tracker Cockpit Card
+                const WeightTrackerCard(),
+                const SizedBox(height: 24),
+
+                // Recent Meals Timeline Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Recent Meals',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    Text(
+                      '${homeVm.meals.length} total',
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                if (homeVm.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(color: AppTheme.neonEmerald),
+                    ),
+                  )
+                else if (homeVm.meals.isEmpty)
+                  GlassCard(
+                    padding: const EdgeInsets.all(28),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.restaurant_rounded, size: 36, color: AppTheme.neonEmerald.withValues(alpha: 0.5)),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'No meals logged yet today.\nTap "Scan Food" to activate AI recognition!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppTheme.textSecondary, height: 1.4, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...homeVm.meals.take(5).map((meal) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: GlassCard(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x2200F59B),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0x4400F59B)),
+                                        ),
+                                        child: Text(
+                                          meal.mealType.toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.neonEmerald,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      InkWell(
+                                        onTap: () async {
+                                          try {
+                                            final newMeal = await homeVm.relogMeal(meal.id);
+                                            if (context.mounted) {
+                                              final label = newMeal.mealType.isNotEmpty
+                                                  ? '${newMeal.mealType[0].toUpperCase()}${newMeal.mealType.substring(1)}'
+                                                  : 'Meal';
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Logged $label again!'),
+                                                  action: SnackBarAction(
+                                                    label: 'Undo',
+                                                    onPressed: () => homeVm.deleteMeal(newMeal.id),
+                                                  ),
+                                                  duration: const Duration(seconds: 4),
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Could not relog meal: $e')),
+                                              );
+                                            }
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0x1AFFFFFF),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0x2AFFFFFF)),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.replay_rounded, size: 12, color: AppTheme.textSecondary),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Log again',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    meal.items.map((i) => i.foodName).join(', '),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${meal.totalCalories.toStringAsFixed(0)} kcal',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.calorieColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                const SizedBox(height: 30),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-
