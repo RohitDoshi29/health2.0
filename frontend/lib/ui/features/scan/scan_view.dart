@@ -411,14 +411,14 @@ class _ScanViewState extends State<ScanView> {
 
           // Camera & Gallery Action Buttons
           CustomButton(
-            text: 'Scan Barcode with Camera',
+            text: 'Scan with Camera',
             icon: Icons.camera_alt_rounded,
             isLoading: scanVm.isLookingUpBarcode,
             onPressed: () => _handleBarcodeImageScan(context, ImageSource.camera),
           ),
           const SizedBox(height: 10),
           CustomButton(
-            text: 'Pick Barcode Image from Gallery',
+            text: 'Choose from Gallery',
             icon: Icons.photo_library_outlined,
             isOutlined: true,
             onPressed: () => _handleBarcodeImageScan(context, ImageSource.gallery),
