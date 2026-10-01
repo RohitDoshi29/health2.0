@@ -194,3 +194,54 @@ async def test_barcode_api_endpoint_upstream_error(
     response = await client.get("/api/v1/nutrition/barcode/999999999999")
     assert response.status_code == 502
     assert "Failed to lookup barcode" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_barcode_scan_image_success(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services.gemini_service import GeminiService
+
+    async def mock_extract(self: GeminiService, image_bytes: bytes, mime_type: str) -> str | None:
+        return "737628064502"
+
+    async def mock_lookup(self: BarcodeService, barcode: str) -> BarcodeProductRead | None:
+        return BarcodeProductRead(
+            barcode="737628064502",
+            name="Organic Rolled Oats",
+            calories=190.0,
+            protein=7.0,
+            carbohydrates=32.0,
+            fat=3.5,
+            fiber=5.0,
+            nutriscore_grade="a",
+            nova_group=1,
+        )
+
+    monkeypatch.setattr(GeminiService, "extract_barcode", mock_extract)
+    monkeypatch.setattr(BarcodeService, "lookup_barcode", mock_lookup)
+
+    files = {"file": ("barcode.jpg", b"fake_image_bytes", "image/jpeg")}
+    response = await client.post("/api/v1/nutrition/barcode/scan-image", files=files)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["barcode"] == "737628064502"
+    assert data["name"] == "Organic Rolled Oats"
+
+
+@pytest.mark.asyncio
+async def test_barcode_scan_image_unreadable(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services.gemini_service import GeminiService
+
+    async def mock_extract(self: GeminiService, image_bytes: bytes, mime_type: str) -> str | None:
+        return None
+
+    monkeypatch.setattr(GeminiService, "extract_barcode", mock_extract)
+
+    files = {"file": ("unclear.jpg", b"blurry_bytes", "image/jpeg")}
+    response = await client.post("/api/v1/nutrition/barcode/scan-image", files=files)
+    assert response.status_code == 422
+    assert "Could not detect a clear barcode" in response.json()["detail"]
+

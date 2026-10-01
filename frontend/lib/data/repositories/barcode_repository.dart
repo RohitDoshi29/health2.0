@@ -26,5 +26,28 @@ class BarcodeRepository {
       rethrow;
     }
   }
+
+  Future<BarcodeProductModel?> scanBarcodeImage({
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    try {
+      final response = await _apiClient.postMultipart(
+        '${ApiConstants.barcode}/scan-image',
+        bytes: bytes,
+        filename: filename,
+        fieldName: 'file',
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return BarcodeProductModel.fromJson(response);
+      }
+      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 422) {
+        return null;
+      }
+      rethrow;
+    }
+  }
 }
 

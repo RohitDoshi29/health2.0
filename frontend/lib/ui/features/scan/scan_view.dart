@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/barcode_model.dart';
 import '../../../data/services/api_client.dart';
 import '../../core/widgets/barcode_result_dialog.dart';
 import '../../core/widgets/custom_button.dart';
@@ -72,21 +73,7 @@ class _ScanViewState extends State<ScanView> {
     if (!context.mounted) return;
 
     if (product != null) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => BarcodeResultDialog(
-          product: product,
-          onAddToPlate: (p, multiplier) {
-            scanVm.addBarcodeProductToPlate(p, multiplier: multiplier);
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AnalysisReviewView()),
-            );
-          },
-        ),
-      );
+      _showBarcodeDialog(context, scanVm, product);
     } else if (scanVm.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -95,6 +82,42 @@ class _ScanViewState extends State<ScanView> {
         ),
       );
     }
+  }
+
+  void _handleBarcodeImageScan(BuildContext context, ImageSource source) async {
+    final scanVm = context.read<ScanViewModel>();
+    final product = await scanVm.scanBarcodeFromImage(source);
+
+    if (!context.mounted) return;
+
+    if (product != null) {
+      _showBarcodeDialog(context, scanVm, product);
+    } else if (scanVm.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(scanVm.errorMessage!),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  void _showBarcodeDialog(BuildContext context, ScanViewModel scanVm, BarcodeProductModel product) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BarcodeResultDialog(
+        product: product,
+        onAddToPlate: (p, multiplier) {
+          scanVm.addBarcodeProductToPlate(p, multiplier: multiplier);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AnalysisReviewView()),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -263,7 +286,7 @@ class _ScanViewState extends State<ScanView> {
   }
 
   Widget _buildPhotoScanBody(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -330,76 +353,98 @@ class _ScanViewState extends State<ScanView> {
 
   Widget _buildBarcodeScanBody(BuildContext context, ScanViewModel scanVm) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Viewfinder Frame Graphic
-          Center(
+          // Viewfinder Frame Graphic - Interactive (tap to open camera)
+          GestureDetector(
+            onTap: () => _handleBarcodeImageScan(context, ImageSource.camera),
             child: Container(
-              width: 220,
-              height: 140,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppTheme.primaryGreen, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                  ),
-                ],
               ),
-              child: Stack(
-                alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.qr_code_scanner_rounded,
-                    size: 64,
-                    color: Colors.white54,
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        size: 64,
+                        color: Colors.white70,
+                      ),
+                      // Red laser scan line
+                      Container(
+                        width: 160,
+                        height: 2,
+                        color: Colors.redAccent,
+                      ),
+                    ],
                   ),
-                  // Red laser scan line
-                  Container(
-                    width: 180,
-                    height: 2,
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.redAccent.withValues(alpha: 0.8),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Point camera at product barcode',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Tap box to open camera 📷',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 20),
+
+          // Camera & Gallery Action Buttons
+          CustomButton(
+            text: 'Scan Barcode with Camera',
+            icon: Icons.camera_alt_rounded,
+            isLoading: scanVm.isLookingUpBarcode,
+            onPressed: () => _handleBarcodeImageScan(context, ImageSource.camera),
+          ),
+          const SizedBox(height: 10),
+          CustomButton(
+            text: 'Pick Barcode Image from Gallery',
+            icon: Icons.photo_library_outlined,
+            isOutlined: true,
+            onPressed: () => _handleBarcodeImageScan(context, ImageSource.gallery),
+          ),
           const SizedBox(height: 24),
 
-          const Text(
-            'Scan Packaged Foods',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
+          // Divider
+          Row(
+            children: [
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'OR ENTER CODE MANUALLY',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Enter or scan a barcode to instantly pull verified nutrition, Nutri-Score, and ingredients from Open Food Facts.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Barcode input field
           Row(
@@ -464,7 +509,7 @@ class _ScanViewState extends State<ScanView> {
             runSpacing: 8,
             children: _sampleBarcodes.map((sample) {
               return ActionChip(
-                backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.6),
+                backgroundColor: AppTheme.primaryLight.withAlpha(160),
                 avatar: const Icon(Icons.qr_code, size: 16, color: AppTheme.primaryDark),
                 label: Text(
                   sample['title']!,

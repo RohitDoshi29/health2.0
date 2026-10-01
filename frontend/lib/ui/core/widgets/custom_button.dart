@@ -66,7 +66,13 @@ class CustomButton extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: color),
           const SizedBox(width: 8),
-          Text(text, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       );
     }

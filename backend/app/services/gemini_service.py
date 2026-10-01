@@ -64,6 +64,16 @@ commentary or markdown formatting:
 }
 """
 
+BARCODE_OCR_PROMPT = """\
+You are an expert OCR and product packaging barcode assistant.
+Analyze the provided product image or barcode photo.
+Look closely for any visible barcode (UPC-A, EAN-13, EAN-8, Code 128, etc.) or the printed numeric barcode digits under or above the barcode stripes.
+Return only a JSON object in this exact format with no extra text or markdown:
+{"barcode": "<digits only without spaces or hyphens, e.g. 737628064502>"}
+If no barcode or barcode digits are visible in the image, return:
+{"barcode": null}
+"""
+
 
 class GeminiServiceError(Exception):
     """Raised when the Gemini API call fails outright (network, auth, etc.)."""
@@ -100,6 +110,43 @@ class GeminiService:
 
         raw_text = await self._call_gemini(image_bytes, mime_type)
         return self._parse_response(raw_text)
+
+    async def extract_barcode(self, image_bytes: bytes, mime_type: str) -> str | None:
+        """Attempt to extract numeric barcode digits from a photo using Gemini Vision."""
+        if not self.api_key:
+            return None
+        import re
+
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=self.api_key)
+        try:
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                    BARCODE_OCR_PROMPT,
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                ),
+            )
+            raw = (response.text or "").strip()
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                if raw.lower().startswith("json"):
+                    raw = raw[4:]
+                raw = raw.strip()
+            data = json.loads(raw)
+            code = data.get("barcode")
+            if code and isinstance(code, str):
+                cleaned = re.sub(r"[^0-9]", "", code.strip())
+                return cleaned if len(cleaned) >= 6 else None
+            return None
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to extract barcode from image with Gemini: %s", exc)
+            return None
 
     async def _call_gemini(self, image_bytes: bytes, mime_type: str) -> str:
         """Make the actual API call using async Google GenAI client with retry."""

@@ -240,6 +240,39 @@ class ScanViewModel extends ChangeNotifier {
     }
   }
 
+  Future<BarcodeProductModel?> scanBarcodeFromImage(ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (file == null) return null;
+
+      _isLookingUpBarcode = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final bytes = await file.readAsBytes();
+      final product = await _barcodeRepository.scanBarcodeImage(
+        bytes: bytes,
+        filename: file.name,
+      );
+      _scannedProduct = product;
+      if (product == null) {
+        _errorMessage = 'Could not detect a clear barcode in the image. Please enter the barcode digits manually below.';
+      }
+      return product;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return null;
+    } finally {
+      _isLookingUpBarcode = false;
+      notifyListeners();
+    }
+  }
+
   void addBarcodeProductToPlate(BarcodeProductModel product, {double multiplier = 1.0}) {
     final item = product.toMealItemAnalysis(multiplier: multiplier);
     _editableItems.add(item);

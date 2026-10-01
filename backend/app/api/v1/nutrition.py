@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -12,6 +12,7 @@ from app.schemas.barcode import BarcodeProductRead
 from app.schemas.nutrition import FoodRead
 from app.schemas.portion import PortionGuideRead
 from app.services.barcode_service import BarcodeService, BarcodeServiceError
+from app.services.gemini_service import GeminiService
 from app.services.nutrition_service import NutritionService
 from app.services.portion_service import PortionService
 
@@ -93,3 +94,43 @@ async def lookup_barcode(barcode: str) -> BarcodeProductRead:
         )
 
     return product
+
+
+@router.post("/barcode/scan-image", response_model=BarcodeProductRead)
+async def scan_barcode_from_image(
+    file: UploadFile = File(...),
+) -> BarcodeProductRead:
+    """Extract barcode from an uploaded image using Gemini OCR and query OpenFoodFacts."""
+    mime_type = file.content_type or "image/jpeg"
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty image uploaded.",
+        )
+
+    gemini_svc = GeminiService()
+    barcode = await gemini_svc.extract_barcode(image_bytes, mime_type)
+    if not barcode:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Could not detect a clear barcode in the provided image.",
+        )
+
+    barcode_svc = BarcodeService()
+    try:
+        product = await barcode_svc.lookup_barcode(barcode)
+    except BarcodeServiceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to lookup barcode '{barcode}': {exc}",
+        ) from exc
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Detected barcode '{barcode}', but no matching product was found in OpenFoodFacts.",
+        )
+
+    return product
+
