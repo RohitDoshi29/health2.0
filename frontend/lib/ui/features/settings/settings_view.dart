@@ -40,9 +40,10 @@ class _SettingsViewState extends State<SettingsView> {
             right: 24,
             bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 24,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1E18),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: const Color(0x3300F59B)),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -61,7 +62,7 @@ class _SettingsViewState extends State<SettingsView> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, color: AppTheme.textSecondary),
                       onPressed: () => Navigator.pop(modalCtx),
                     ),
                   ],
@@ -82,14 +83,14 @@ class _SettingsViewState extends State<SettingsView> {
                 const SizedBox(height: 12),
                 _buildGoalInputField('Fiber (g)', fiberCtrl, Icons.eco, AppTheme.fiberColor),
                 const SizedBox(height: 12),
-                _buildGoalInputField('Daily Water (ml)', waterCtrl, Icons.water_drop, Colors.blue.shade600),
+                _buildGoalInputField('Daily Water (ml)', waterCtrl, Icons.water_drop, const Color(0xFF00B2FF)),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryDark,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppTheme.neonEmerald,
+                      foregroundColor: const Color(0xFF04130D),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -115,7 +116,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Daily goals updated successfully!'),
-                            backgroundColor: AppTheme.primaryDark,
+                            backgroundColor: AppTheme.neonEmerald,
                           ),
                         );
                       }
@@ -143,12 +144,24 @@ class _SettingsViewState extends State<SettingsView> {
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: AppTheme.textSecondary),
         prefixIcon: Icon(icon, color: accentColor, size: 20),
+        filled: true,
+        fillColor: const Color(0xFF14241D),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: const BorderSide(color: Color(0x3300F59B)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0x3300F59B)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppTheme.neonEmerald, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
@@ -159,17 +172,21 @@ class _SettingsViewState extends State<SettingsView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out of Heathify?'),
+        backgroundColor: const Color(0xFF0F1E18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0x3300F59B)),
+        ),
+        title: const Text('Log Out', style: TextStyle(color: AppTheme.textPrimary)),
+        content: const Text('Are you sure you want to log out of Heathify?', style: TextStyle(color: AppTheme.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
+              backgroundColor: Colors.red.shade700,
               foregroundColor: Colors.white,
             ),
             onPressed: () {

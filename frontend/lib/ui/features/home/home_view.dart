@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../core/widgets/magnification_dock.dart';
 import '../../core/widgets/glass_card.dart';
 import '../../core/widgets/nutrition_orbit.dart';
 import '../../core/widgets/floating_food_widget.dart';
@@ -53,47 +54,55 @@ class _HomeViewState extends State<HomeView> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        backgroundColor: const Color(0xE6080D0B),
-        indicatorColor: const Color(0x3300F59B),
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          if (index == 2 || index == 3) {
-            context.read<HomeViewModel>().loadMeals();
-            try {
-              Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
-            } catch (_) {}
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info, color: AppTheme.neonEmerald),
-            label: 'Info',
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: screens[_currentIndex],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.camera_alt_outlined),
-            selectedIcon: Icon(Icons.camera_alt, color: AppTheme.neonEmerald),
-            label: 'Scan Food',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: AppTheme.neonEmerald),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: AppTheme.neonEmerald),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: AppTheme.neonEmerald),
-            label: 'Settings',
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: MagnificationDock(
+                selectedIndex: _currentIndex,
+                onItemSelected: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                  if (index == 2 || index == 3) {
+                    context.read<HomeViewModel>().loadMeals();
+                    try {
+                      Provider.of<StreakViewModel?>(context, listen: false)?.loadStreaks();
+                    } catch (_) {}
+                  }
+                },
+                items: const [
+                  DockItemData(
+                    icon: Icons.info_outline,
+                    label: 'Info',
+                  ),
+                  DockItemData(
+                    icon: Icons.camera_alt_rounded,
+                    label: 'Scan Food',
+                    isSpecial: true,
+                  ),
+                  DockItemData(
+                    icon: Icons.home_rounded,
+                    label: 'Home',
+                  ),
+                  DockItemData(
+                    icon: Icons.history_rounded,
+                    label: 'History',
+                  ),
+                  DockItemData(
+                    icon: Icons.settings_rounded,
+                    label: 'Settings',
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

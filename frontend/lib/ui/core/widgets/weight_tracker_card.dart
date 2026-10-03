@@ -33,12 +33,16 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: const Color(0xFF140F24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0x44A855F7)),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.monitor_weight_outlined, color: Color(0xFF7C3AED)),
+            Icon(Icons.monitor_weight_outlined, color: Color(0xFFC084FC)),
             SizedBox(width: 8),
-            Text('Log Weight'),
+            Text('Log Weight', style: TextStyle(color: AppTheme.textPrimary)),
           ],
         ),
         content: Column(
@@ -54,11 +58,27 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
               controller: controller,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
+              style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 labelText: 'Weight (kg)',
+                labelStyle: const TextStyle(color: AppTheme.textSecondary),
                 suffixText: 'kg',
-                prefixIcon: const Icon(Icons.scale, color: Color(0xFF7C3AED)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                suffixStyle: const TextStyle(color: AppTheme.textSecondary),
+                prefixIcon: const Icon(Icons.scale, color: Color(0xFFC084FC)),
+                filled: true,
+                fillColor: const Color(0xFF1D1633),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0x33A855F7)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0x33A855F7)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFA855F7), width: 1.5),
+                ),
               ),
             ),
           ],
@@ -66,11 +86,11 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
+              backgroundColor: const Color(0xFF9333EA),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -83,7 +103,7 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Logged ${val.toStringAsFixed(1)} kg'),
-                      backgroundColor: const Color(0xFF7C3AED),
+                      backgroundColor: const Color(0xFF9333EA),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -107,12 +127,12 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF140F24),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0x33A855F7), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x08000000),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -140,12 +160,13 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F3FF),
+                            color: const Color(0x33A855F7),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0x44A855F7)),
                           ),
                           child: const Icon(
                             Icons.monitor_weight_outlined,
-                            color: Color(0xFF7C3AED),
+                            color: Color(0xFFC084FC),
                             size: 22,
                           ),
                         ),
@@ -174,17 +195,18 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                     ),
                     OutlinedButton.icon(
                       onPressed: () => _showQuickLogDialog(context, vm),
-                      icon: const Icon(Icons.add, size: 16, color: Color(0xFF7C3AED)),
+                      icon: const Icon(Icons.add, size: 16, color: Color(0xFFC084FC)),
                       label: const Text(
                         'Log',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF7C3AED),
+                          color: Color(0xFFC084FC),
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFDDD6FE)),
+                        backgroundColor: const Color(0x22A855F7),
+                        side: const BorderSide(color: Color(0x44A855F7)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       ),
@@ -240,13 +262,13 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: delta7d <= 0
-                              ? const Color(0xFFECFDF5)
-                              : const Color(0xFFFEF2F2),
+                              ? const Color(0x3300F59B)
+                              : const Color(0x33EF4444),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: delta7d <= 0
-                                ? const Color(0xFFA7F3D0)
-                                : const Color(0xFFFECACA),
+                                ? const Color(0x6600F59B)
+                                : const Color(0x66EF4444),
                           ),
                         ),
                         child: Row(
@@ -256,8 +278,8 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                               delta7d <= 0 ? Icons.trending_down : Icons.trending_up,
                               size: 14,
                               color: delta7d <= 0
-                                  ? const Color(0xFF059669)
-                                  : const Color(0xFFDC2626),
+                                  ? AppTheme.neonEmerald
+                                  : const Color(0xFFF87171),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -266,8 +288,8 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: delta7d <= 0
-                                    ? const Color(0xFF059669)
-                                    : const Color(0xFFDC2626),
+                                    ? AppTheme.neonEmerald
+                                    : const Color(0xFFF87171),
                               ),
                             ),
                           ],
@@ -280,11 +302,11 @@ class _WeightTrackerCardState extends State<WeightTrackerCard> {
                             'View chart',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF7C3AED),
+                              color: Color(0xFFC084FC),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          Icon(Icons.chevron_right, size: 16, color: Color(0xFF7C3AED)),
+                          Icon(Icons.chevron_right, size: 16, color: Color(0xFFC084FC)),
                         ],
                       ),
                   ],

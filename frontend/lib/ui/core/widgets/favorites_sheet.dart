@@ -62,7 +62,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Logged "${fav.name}" to today\'s meals!'),
-            backgroundColor: AppTheme.primaryGreen,
+            backgroundColor: AppTheme.neonEmerald,
           ),
         );
         widget.onMealLogged?.call();
@@ -105,9 +105,10 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1E18),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: const Color(0x3300F59B)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       constraints: BoxConstraints(
@@ -123,7 +124,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: const Color(0x3300F59B),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -148,7 +149,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(Icons.close, color: AppTheme.textSecondary),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -157,7 +158,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
 
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.neonEmerald))
                 : _favorites.isEmpty
                     ? _buildEmptyState()
                     : ListView.separated(
@@ -186,7 +187,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
+                color: Colors.amber.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.star_border_rounded, size: 48, color: Colors.amber),
@@ -216,9 +217,9 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: const Color(0xFF14241D),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: const Color(0x2200F59B)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +242,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: const Color(0x3300F59B),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -249,13 +250,13 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryDark,
+                    color: AppTheme.neonEmerald,
                   ),
                 ),
               ),
               const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFF87171)),
                 onPressed: () => _deleteFavorite(fav.id),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -282,15 +283,15 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryGreen,
+                      color: AppTheme.calorieColor,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'P: ${fav.totalProtein.round()}g  C: ${fav.totalCarbohydrates.round()}g  F: ${fav.totalFat.round()}g',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: AppTheme.textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -298,8 +299,8 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.neonEmerald,
+                  foregroundColor: const Color(0xFF04130D),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -308,7 +309,7 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF04130D)),
                       )
                     : const Icon(Icons.bolt, size: 16),
                 label: const Text('1-Tap Log', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -320,4 +321,3 @@ class _FavoritesSheetState extends State<FavoritesSheet> {
     );
   }
 }
-
