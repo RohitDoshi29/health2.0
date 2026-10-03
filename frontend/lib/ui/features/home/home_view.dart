@@ -9,6 +9,7 @@ import '../../core/widgets/favorites_sheet.dart';
 import '../../core/widgets/water_tracker_card.dart';
 import '../../core/widgets/weight_tracker_card.dart';
 import '../../core/widgets/daily_score_card.dart';
+import '../../core/widgets/glass_bottom_nav.dart';
 import '../../../data/services/sync_manager.dart';
 import '../auth/auth_view_model.dart';
 import '../streak/streak_view_model.dart';
@@ -53,12 +54,11 @@ class _HomeViewState extends State<HomeView> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
+      extendBody: true,
       body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        backgroundColor: const Color(0xE6080D0B),
-        indicatorColor: const Color(0x3300F59B),
-        onDestinationSelected: (index) {
+      bottomNavigationBar: GlassBottomNav(
+        currentIndex: _currentIndex,
+        onIndexChanged: (index) {
           setState(() {
             _currentIndex = index;
           });
@@ -69,33 +69,11 @@ class _HomeViewState extends State<HomeView> {
             } catch (_) {}
           }
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info, color: AppTheme.neonEmerald),
-            label: 'Info',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.camera_alt_outlined),
-            selectedIcon: Icon(Icons.camera_alt, color: AppTheme.neonEmerald),
-            label: 'Scan Food',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: AppTheme.neonEmerald),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: AppTheme.neonEmerald),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: AppTheme.neonEmerald),
-            label: 'Settings',
-          ),
-        ],
+        onScanTap: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
       ),
     );
   }
