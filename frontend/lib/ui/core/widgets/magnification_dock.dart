@@ -48,9 +48,9 @@ class MagnificationDock extends StatefulWidget {
     this.selectedIndex = 0,
     this.onItemSelected,
     this.distance = 120.0,
-    this.panelHeight = 66.0,
+    this.panelHeight = 68.0,
     this.baseItemSize = 38.0,
-    this.magnification = 58.0,
+    this.magnification = 56.0,
     this.margin = const EdgeInsets.fromLTRB(16, 0, 16, 16),
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     this.showLabels = true,
@@ -115,7 +115,6 @@ class _MagnificationDockState extends State<MagnificationDock> {
       return base;
     }
 
-    // Smooth cosine wave magnification
     final factor = math.cos((delta / widget.distance) * (math.pi / 2));
     return base + (max - base) * factor;
   }
@@ -463,3 +462,4 @@ class _DockTooltip extends StatelessWidget {
     );
   }
 }
+
