@@ -5,7 +5,7 @@ class NutritionSummaryModel {
   final double fat;
   final double fiber;
 
-  NutritionSummaryModel({
+  const NutritionSummaryModel({
     required this.estimatedCalories,
     required this.protein,
     required this.carbohydrates,

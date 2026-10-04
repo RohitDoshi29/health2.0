@@ -214,11 +214,6 @@ class MealItemAnalysisModel {
 }
 
 class MealAnalysisResponseModel {
-  final String status;
-  final String validationType;
-  final double validationConfidence;
-  final String? validationMessage;
-  final BarcodeProductModel? barcodeProduct;
   final NutritionSummaryModel total;
   final List<MealItemAnalysisModel> items;
   final List<String> unmatchedItems;
@@ -226,13 +221,13 @@ class MealAnalysisResponseModel {
   final String verificationStatus;
   final List<String> warnings;
   final String disclaimer;
+  final String status;
+  final String? validationType;
+  final double? validationConfidence;
+  final String? validationMessage;
+  final BarcodeProductModel? barcodeProduct;
 
   MealAnalysisResponseModel({
-    this.status = 'success',
-    this.validationType = 'food',
-    this.validationConfidence = 1.0,
-    this.validationMessage,
-    this.barcodeProduct,
     required this.total,
     required this.items,
     this.unmatchedItems = const [],
@@ -240,31 +235,23 @@ class MealAnalysisResponseModel {
     this.verificationStatus = 'verified',
     this.warnings = const [],
     required this.disclaimer,
+    this.status = 'success',
+    this.validationType,
+    this.validationConfidence,
+    this.validationMessage,
+    this.barcodeProduct,
   });
 
-  bool get isNonFood => status == 'non_food' || validationType == 'non_food';
-  bool get isUncertain => status == 'uncertain' || validationType == 'uncertain';
-  bool get isBarcode => status == 'barcode' || validationType == 'barcode';
-  bool get isSuccess => status == 'success' && !isNonFood && !isUncertain && !isBarcode;
+  bool get isNonFood => validationType == 'non_food' || status == 'non_food';
+  bool get isUncertain => validationType == 'uncertain' || status == 'uncertain';
+  bool get isBarcode => validationType == 'barcode' || status == 'barcode';
+  bool get isSuccess => status == 'success' && !isNonFood && !isUncertain;
 
   factory MealAnalysisResponseModel.fromJson(Map<String, dynamic> json) {
     return MealAnalysisResponseModel(
-      status: json['status'] as String? ?? 'success',
-      validationType: json['validation_type'] as String? ?? 'food',
-      validationConfidence: (json['validation_confidence'] as num?)?.toDouble() ?? 1.0,
-      validationMessage: json['validation_message'] as String?,
-      barcodeProduct: json['barcode_product'] != null
-          ? BarcodeProductModel.fromJson(json['barcode_product'] as Map<String, dynamic>)
-          : null,
       total: json['total'] != null
           ? NutritionSummaryModel.fromJson(json['total'] as Map<String, dynamic>)
-          : NutritionSummaryModel(
-              estimatedCalories: 0,
-              protein: 0,
-              carbohydrates: 0,
-              fat: 0,
-              fiber: 0,
-            ),
+          : const NutritionSummaryModel(estimatedCalories: 0, protein: 0, carbohydrates: 0, fat: 0, fiber: 0),
       items: (json['items'] as List<dynamic>?)
               ?.map((e) => MealItemAnalysisModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -280,6 +267,14 @@ class MealAnalysisResponseModel {
               .toList() ??
           [],
       disclaimer: json['disclaimer'] as String? ?? '',
+      status: json['status'] as String? ?? 'success',
+      validationType: json['validation_type'] as String?,
+      validationConfidence: (json['validation_confidence'] as num?)?.toDouble(),
+      validationMessage: json['validation_message'] as String?,
+      barcodeProduct: json['barcode_product'] != null
+          ? BarcodeProductModel.fromJson(json['barcode_product'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
+

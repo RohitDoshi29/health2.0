@@ -199,17 +199,18 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
             ),
             if (isCapped)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade100,
-                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0x22FF8A00),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0x66FF8A00)),
                 ),
-                child: Text(
+                child: const Text(
                   'Capped at max 1200g',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade900,
+                    color: Color(0xFFFF9E33),
                   ),
                 ),
               ),
@@ -235,14 +236,15 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                   });
                   _notify();
                 },
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primaryLight : AppTheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isSelected ? const Color(0x2800F59B) : const Color(0x18FFFFFF),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE5E7EB),
-                      width: isSelected ? 2.0 : 1.0,
+                      color: isSelected ? AppTheme.neonEmerald : const Color(0x22FFFFFF),
+                      width: isSelected ? 1.6 : 1.0,
                     ),
                   ),
                   child: Row(
@@ -251,7 +253,7 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.grey.shade100,
+                          color: isSelected ? const Color(0x3300F59B) : const Color(0x22FFFFFF),
                           shape: BoxShape.circle,
                         ),
                         child: portion.imageAsset != null
@@ -262,14 +264,14 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                                   errorBuilder: (_, __, ___) => Icon(
                                     _getIconForPortion(portion),
                                     size: 20,
-                                    color: isSelected ? AppTheme.primaryGreen : AppTheme.textSecondary,
+                                    color: isSelected ? AppTheme.neonEmerald : AppTheme.textSecondary,
                                   ),
                                 ),
                               )
                             : Icon(
                                 _getIconForPortion(portion),
                                 size: 20,
-                                color: isSelected ? AppTheme.primaryGreen : AppTheme.textSecondary,
+                                color: isSelected ? AppTheme.neonEmerald : AppTheme.textSecondary,
                               ),
                       ),
                       const SizedBox(width: 8),
@@ -282,7 +284,7 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                              color: isSelected ? AppTheme.primaryGreen : AppTheme.textPrimary,
+                              color: isSelected ? AppTheme.neonEmerald : AppTheme.textPrimary,
                             ),
                           ),
                           Text(
@@ -301,15 +303,15 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
             },
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
 
         // Stepper and live calculation card
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            color: const Color(0x18FFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0x22FFFFFF)),
           ),
           child: Row(
             children: [
@@ -319,7 +321,7 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline, size: 22),
-                    color: _multiplier > 0.5 ? AppTheme.textPrimary : Colors.grey.shade400,
+                    color: _multiplier > 0.5 ? AppTheme.textPrimary : AppTheme.textMuted,
                     onPressed: _multiplier > 0.5 ? _decrease : null,
                   ),
                   Container(
@@ -336,7 +338,7 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, size: 22),
-                    color: _multiplier < 10.0 ? AppTheme.primaryGreen : Colors.grey.shade400,
+                    color: _multiplier < 10.0 ? AppTheme.neonEmerald : AppTheme.textMuted,
                     onPressed: _multiplier < 10.0 ? _increase : null,
                   ),
                 ],
@@ -358,8 +360,8 @@ class _PortionPickerWidgetState extends State<PortionPickerWidget> {
                     '≈ ${totalCalories.toStringAsFixed(0)} kcal',
                     style: const TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryGreen,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.neonEmerald,
                     ),
                   ),
                 ],
