@@ -422,7 +422,7 @@ class _SettingsViewState extends State<SettingsView> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Settings & Profile'),
+        title: const Text('Settings'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -624,7 +624,7 @@ class _SettingsViewState extends State<SettingsView> {
 
             // Section 1: Nutrition & Hydration Goals
             _buildSectionHeader(
-              title: 'NUTRITION & HYDRATION TARGETS',
+              title: 'Nutrition & Hydration Targets',
               actionLabel: 'Edit Goals',
               onAction: () => _showEditGoalsSheet(context, homeVm, waterVm),
             ),
@@ -695,7 +695,7 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(height: 24),
 
             // Section 2: Data & Connectivity
-            _buildSectionHeader(title: 'DATA & CONNECTIVITY'),
+            _buildSectionHeader(title: 'Data & Connectivity'),
             const SizedBox(height: 10),
             GlassCard(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
@@ -757,7 +757,7 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(height: 24),
 
             // Section 3: Information & Support
-            _buildSectionHeader(title: 'ABOUT & LEGAL'),
+            _buildSectionHeader(title: 'About & Support'),
             const SizedBox(height: 10),
             GlassCard(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
@@ -802,7 +802,7 @@ class _SettingsViewState extends State<SettingsView> {
                   Icon(Icons.logout_rounded, color: Color(0xFFFF4D4D), size: 20),
                   SizedBox(width: 10),
                   Text(
-                    'Log Out of Heathify',
+                    'Log Out',
                     style: TextStyle(
                       color: Color(0xFFFF4D4D),
                       fontWeight: FontWeight.bold,
