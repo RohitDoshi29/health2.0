@@ -168,6 +168,9 @@ class ScanViewModel extends ChangeNotifier {
       );
 
       _analysisResult = result;
+      if (result.barcodeProduct != null) {
+        _scannedProduct = result.barcodeProduct;
+      }
       _editableItems = List.from(result.items);
       _state = ScanState.reviewing;
       notifyListeners();

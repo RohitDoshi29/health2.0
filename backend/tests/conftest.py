@@ -18,7 +18,14 @@ from app.core.database import Base, get_db
 from app.core.security import create_access_token, hash_password
 from app.main import app
 from app.models.user import User
-from app.schemas.analysis import BoundingBox, FoodDetection, GeminiAnalysisResult, QuantityUnit
+from app.schemas.analysis import (
+    BoundingBox,
+    FoodDetection,
+    GeminiAnalysisResult,
+    ImageClassificationType,
+    ImageValidationResult,
+    QuantityUnit,
+)
 from app.services.gemini_service import GeminiService, get_gemini_service
 
 # NOTE: requires `aiosqlite` only for tests. If it's not installed,
@@ -38,6 +45,13 @@ class FakeGeminiService(GeminiService):
 
     def __init__(self) -> None:
         super().__init__(api_key="test-key", model="fake-model")
+
+    async def validate_image(self, image_bytes: bytes, mime_type: str) -> ImageValidationResult:
+        return ImageValidationResult(
+            type=ImageClassificationType.FOOD,
+            confidence=0.95,
+            description="Synthetic food test image",
+        )
 
     async def detect_foods(self, image_bytes: bytes, mime_type: str) -> GeminiAnalysisResult:
         return GeminiAnalysisResult(

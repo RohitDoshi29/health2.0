@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/analysis_model.dart';
@@ -238,6 +239,45 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
   @override
   Widget build(BuildContext context) {
     final scanVm = context.watch<ScanViewModel>();
+    final result = scanVm.analysisResult;
+
+    // Handle validation failure: non-food or uncertain/blurry image
+    if (result != null && (result.isNonFood || result.isUncertain)) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(result.isNonFood ? 'Image Validation' : 'Unclear Image'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              scanVm.reset();
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        body: SafeArea(
+          child: _buildValidationFailureView(context, scanVm, result),
+        ),
+      );
+    }
+
+    // Handle barcode image detection
+    if (result != null && result.isBarcode && scanVm.editableItems.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Barcode Detected'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              scanVm.reset();
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        body: SafeArea(
+          child: _buildBarcodeDetectedView(context, scanVm, result),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -825,6 +865,261 @@ class _AnalysisReviewViewState extends State<AnalysisReviewView> {
         ],
       ),
     );
+  }
+
+  Widget _buildValidationFailureView(
+    BuildContext context,
+    ScanViewModel scanVm,
+    MealAnalysisResponseModel result,
+  ) {
+    final isNonFood = result.isNonFood;
+    final title = isNonFood ? 'Non-Food Item Detected' : 'Unclear Image';
+    final defaultMsg = isNonFood
+        ? '⚠️ Non-eatable item detected. Please upload an image of food or a food barcode.'
+        : '⚠️ We couldn\'t identify food in this image. Please upload a clearer image of your food or barcode.';
+    final message = result.validationMessage ?? defaultMsg;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Preview of the analyzed image
+            if (scanVm.imageBytes != null) ...[
+              Center(
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Container(
+                      width: 170,
+                      height: 170,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isNonFood ? Colors.red.shade300 : Colors.amber.shade400,
+                          width: 2.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isNonFood ? Colors.red : Colors.amber).withValues(alpha: 0.15),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(17),
+                        child: Image.memory(
+                          scanVm.imageBytes!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: isNonFood ? Colors.red.shade600 : Colors.amber.shade700,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isNonFood ? Icons.close_rounded : Icons.priority_high_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // Validation Warning Card
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: isNonFood ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isNonFood ? const Color(0xFFFECACA) : const Color(0xFFFDE68A),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isNonFood ? Icons.no_food_rounded : Icons.image_not_supported_rounded,
+                        color: isNonFood ? Colors.red.shade700 : Colors.amber.shade900,
+                        size: 26,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isNonFood ? Colors.red.shade900 : Colors.amber.shade900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isNonFood ? const Color(0xFF7F1D1D) : const Color(0xFF78350F),
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isNonFood
+                        ? 'Healthify analyzes meals, snacks, ingredients, and barcodes to calculate nutrition accurately.'
+                        : 'Make sure your meal is well-lit, in focus, and clearly visible from above.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // Action Buttons
+            CustomButton(
+              text: 'Take New Photo',
+              icon: Icons.camera_alt_rounded,
+              onPressed: () async {
+                await scanVm.pickAndAnalyze(ImageSource.camera);
+              },
+            ),
+            const SizedBox(height: 12),
+            CustomButton(
+              text: 'Choose from Gallery',
+              icon: Icons.photo_library_outlined,
+              isOutlined: true,
+              onPressed: () async {
+                await scanVm.pickAndAnalyze(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () {
+                scanVm.reset();
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_back, size: 18, color: AppTheme.textSecondary),
+              label: const Text(
+                'Back to Food Logging',
+                style: TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBarcodeDetectedView(
+    BuildContext context,
+    ScanViewModel scanVm,
+    MealAnalysisResponseModel result,
+  ) {
+    final product = result.barcodeProduct ?? scanVm.scannedProduct;
+
+    if (product != null) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.primaryGreen, width: 1.5),
+              ),
+              child: Column(
+                children: [
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryDark, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Barcode Product Detected',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    product.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  if (product.brand != null && product.brand!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      product.brand!,
+                      style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  MacroCard(
+                    calories: product.calories,
+                    protein: product.protein,
+                    carbs: product.carbohydrates,
+                    fat: product.fat,
+                    fiber: product.fiber,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            CustomButton(
+              text: 'Add Product to Plate',
+              icon: Icons.add_circle_outline,
+              onPressed: () {
+                scanVm.addBarcodeProductToPlate(product);
+              },
+            ),
+            const SizedBox(height: 12),
+            CustomButton(
+              text: 'Scan Another Item',
+              icon: Icons.camera_alt_outlined,
+              isOutlined: true,
+              onPressed: () => scanVm.pickAndAnalyze(ImageSource.camera),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildValidationFailureView(context, scanVm, result);
   }
 }
 

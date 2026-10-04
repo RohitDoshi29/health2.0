@@ -24,11 +24,13 @@ from app.models.meal import Meal
 from app.models.meal_item import MealItem
 from app.schemas.analysis import (
     GeminiAnalysisResult,
+    ImageClassificationType,
     MealAnalysisResponse,
     MealItemAnalysis,
 )
-from app.schemas.meal import MealCreate, MealUpdate, RecentFoodRead
+from app.schemas.meal import MealCreate, RecentFoodRead, MealUpdate
 from app.schemas.nutrition import NutritionSummary
+from app.services.barcode_service import BarcodeService
 from app.services.calorie_verification_service import (
     CalorieVerificationService,
     VerificationInput,
@@ -43,7 +45,7 @@ from app.utils.image import resize_if_needed, save_image_bytes, validate_and_rea
 logger = logging.getLogger(__name__)
 
 # In-memory image analysis cache keyed by SHA-256 content hash.
-# Version suffix v2 ensures automatic cache busting across engine upgrades.
+# Version suffix v3 ensures automatic cache busting across engine upgrades.
 _IMAGE_ANALYSIS_CACHE: dict[str, MealAnalysisResponse] = {}
 
 # Known composite dishes and their typical component ingredients / toppings.
@@ -262,23 +264,124 @@ class MealService:
     async def analyze_image(self, upload: UploadFile) -> MealAnalysisResponse:
         """Full analysis pipeline for an uploaded image.
 
-        IMAGE -> validate -> content SHA-256 check -> GeminiService -> FoodDetection[]
-              -> Anti-Double-Counting -> NutritionService -> CalorieVerificationService
-              -> validate_final_meal -> MealAnalysisResponse
+        IMAGE -> validate -> content SHA-256 check -> Pre-validation Classifier
+              -> (if non_food/uncertain/barcode: return structured validation response)
+              -> GeminiService -> FoodDetection[] -> Anti-Double-Counting -> NutritionService
+              -> CalorieVerificationService -> validate_final_meal -> MealAnalysisResponse
         """
         validated = await validate_and_read_image(upload)
         optimized = resize_if_needed(validated)
 
         # Check content-hash cache first (SHA-256 guarantees cache validity across identical images)
         content_hash = hashlib.sha256(optimized.content).hexdigest()
-        cache_key = f"{content_hash}:v2"
+        cache_key = f"{content_hash}:v3"
         if cache_key in _IMAGE_ANALYSIS_CACHE:
             logger.info("Serving meal analysis from SHA-256 content cache (%s)", cache_key[:12])
             return _IMAGE_ANALYSIS_CACHE[cache_key].model_copy(deep=True)
 
+        image_url: str | None = None
+        try:
+            image_url = save_image_bytes(optimized.content, optimized.content_type)
+        except Exception:
+            pass
+
+        # Step 1: Pre-validate image classification before expensive nutrition analysis
+        validation = await self.gemini_service.validate_image(
+            image_bytes=optimized.content, mime_type=optimized.content_type
+        )
+
+        empty_total = NutritionSummary(
+            estimated_calories=0.0,
+            protein=0.0,
+            carbohydrates=0.0,
+            fat=0.0,
+            fiber=0.0,
+        )
+
+        # Step 2: Handle non-food rejection
+        if validation.type == ImageClassificationType.NON_FOOD:
+            logger.info("Image rejected as non-food (confidence: %.2f)", validation.confidence)
+            response = MealAnalysisResponse(
+                status="non_food",
+                validation_type=ImageClassificationType.NON_FOOD,
+                validation_confidence=validation.confidence,
+                validation_message="⚠️ Non-eatable item detected. Please upload an image of food or a food barcode.",
+                image_url=image_url,
+                items=[],
+                unmatched_items=[],
+                total=empty_total,
+            )
+            _IMAGE_ANALYSIS_CACHE[cache_key] = response.model_copy(deep=True)
+            return response
+
+        # Step 3: Handle uncertain or blurry images
+        if validation.type == ImageClassificationType.UNCERTAIN:
+            logger.info("Image classified as uncertain (confidence: %.2f)", validation.confidence)
+            response = MealAnalysisResponse(
+                status="uncertain",
+                validation_type=ImageClassificationType.UNCERTAIN,
+                validation_confidence=validation.confidence,
+                validation_message="⚠️ We couldn't identify food in this image. Please upload a clearer image of your food or barcode.",
+                image_url=image_url,
+                items=[],
+                unmatched_items=[],
+                total=empty_total,
+            )
+            _IMAGE_ANALYSIS_CACHE[cache_key] = response.model_copy(deep=True)
+            return response
+
+        # Step 4: Handle barcode images (do NOT send to calorie estimation)
+        if validation.type == ImageClassificationType.BARCODE:
+            logger.info("Barcode detected in uploaded image; looking up product info")
+            barcode = await self.gemini_service.extract_barcode(
+                image_bytes=optimized.content, mime_type=optimized.content_type
+            )
+            barcode_product = None
+            if barcode:
+                try:
+                    barcode_svc = BarcodeService()
+                    barcode_product = await barcode_svc.lookup_barcode(barcode)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Barcode lookup error: %s", exc)
+
+            if barcode_product:
+                validation_msg = f"Barcode product detected: {barcode_product.name}"
+            else:
+                validation_msg = "Barcode detected in image. Please confirm barcode digits or scan in the Barcode tab."
+
+            response = MealAnalysisResponse(
+                status="barcode",
+                validation_type=ImageClassificationType.BARCODE,
+                validation_confidence=validation.confidence,
+                validation_message=validation_msg,
+                barcode_product=barcode_product,
+                image_url=image_url,
+                items=[],
+                unmatched_items=[],
+                total=empty_total,
+            )
+            _IMAGE_ANALYSIS_CACHE[cache_key] = response.model_copy(deep=True)
+            return response
+
+        # Step 5: Food detected -> Proceed with existing food recognition pipeline
         detection_result: GeminiAnalysisResult = await self.gemini_service.detect_foods(
             image_bytes=optimized.content, mime_type=optimized.content_type
         )
+
+        if not detection_result.foods:
+            # Fallback if Gemini failed to detect specific foods
+            response = MealAnalysisResponse(
+                status="uncertain",
+                validation_type=ImageClassificationType.UNCERTAIN,
+                validation_confidence=validation.confidence,
+                validation_message="⚠️ We couldn't identify food in this image. Please upload a clearer image of your food or barcode.",
+                image_url=image_url,
+                items=[],
+                unmatched_items=[],
+                total=empty_total,
+            )
+            _IMAGE_ANALYSIS_CACHE[cache_key] = response.model_copy(deep=True)
+            return response
 
         # Identify composite dishes present in the detections
         composite_dishes: list[tuple[str, str]] = []  # (dish_key, display_name)
@@ -426,13 +529,10 @@ class MealService:
             items=items, total=total
         )
 
-        image_url: str | None = None
-        try:
-            image_url = save_image_bytes(optimized.content, optimized.content_type)
-        except Exception:
-            pass
-
         response = MealAnalysisResponse(
+            status="success",
+            validation_type=ImageClassificationType.FOOD,
+            validation_confidence=validation.confidence,
             total=total,
             items=items,
             unmatched_items=unmatched_items,

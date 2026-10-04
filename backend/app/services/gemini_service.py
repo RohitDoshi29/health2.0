@@ -16,10 +16,36 @@ from app.schemas.analysis import (
     BoundingBox,
     FoodDetection,
     GeminiAnalysisResult,
+    ImageClassificationType,
+    ImageValidationResult,
     QuantityUnit,
 )
 
 logger = logging.getLogger(__name__)
+
+CONFIDENCE_THRESHOLD = 0.65
+
+IMAGE_VALIDATION_PROMPT = """\
+You are an image validation classifier for a nutrition and meal tracking application.
+Your task is to analyze the uploaded image and classify it into exactly one of four categories:
+
+1. "food": The image clearly contains one or more edible food items, cooked meals, dishes, snacks, beverages, fruits, vegetables, baked goods, or raw cooking ingredients.
+2. "barcode": The image contains a visible food/product barcode (UPC, EAN, or printed barcode digits on product packaging) intended for barcode scanning.
+3. "non_food": The image contains non-food / non-edible objects, people, or scenes (such as phone, laptop, electronics, shoes, clothes, vehicles, human faces/selfies, animals/pets, furniture, cosmetics, tools, documents, office supplies, household goods, or other everyday non-food items).
+4. "uncertain": The image is blurry, out-of-focus, empty, dark, corrupted, ambiguous, or cannot confidently be classified as food or barcode.
+
+Confidence Rule:
+- Provide a confidence score between 0.0 and 1.0.
+- If the image contains non-food items, classify as "non_food".
+- If the image is blurry, empty, or confidence for food is below 0.65, classify as "uncertain".
+
+Return ONLY a valid JSON object matching this schema with no markdown fences or commentary:
+{
+  "type": "food" | "barcode" | "non_food" | "uncertain",
+  "confidence": 0.95,
+  "description": "brief description of image content"
+}
+"""
 
 # Kept as a plain module-level constant so it's easy to find and tweak
 # without digging through service logic.
@@ -93,6 +119,118 @@ class GeminiService:
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         self.api_key = api_key if api_key is not None else settings.GEMINI_API_KEY
         self.model = model if model is not None else settings.GEMINI_MODEL
+
+    async def validate_image(
+        self, image_bytes: bytes, mime_type: str
+    ) -> ImageValidationResult:
+        """Determine whether an uploaded image contains food, a barcode, non-food, or is uncertain.
+
+        Raises:
+            GeminiServiceError: on API/network failure.
+        """
+        if not self.api_key:
+            raise GeminiServiceError(
+                "GEMINI_API_KEY is not configured. Set it in your environment "
+                "before calling the analysis endpoint."
+            )
+
+        import asyncio
+
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=self.api_key)
+        raw_text = ""
+        for attempt in range(2):
+            try:
+                response = await client.aio.models.generate_content(
+                    model=self.model,
+                    contents=[
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                        IMAGE_VALIDATION_PROMPT,
+                    ],
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                    ),
+                )
+                raw_text = response.text or ""
+                break
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Gemini validation API attempt %d failed: %s (%s)",
+                    attempt + 1,
+                    type(exc).__name__,
+                    exc,
+                )
+                if attempt == 0:
+                    await asyncio.sleep(1.0)
+                else:
+                    raise GeminiServiceError(
+                        f"Failed to reach the Gemini API for image validation: {exc}"
+                    ) from exc
+
+        return self._parse_validation_response(raw_text)
+
+    def _parse_validation_response(self, raw_text: str) -> ImageValidationResult:
+        """Parse raw JSON validation response and apply confidence thresholding."""
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            if cleaned.lower().startswith("json"):
+                cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+
+        try:
+            payload = json.loads(cleaned)
+        except Exception:
+            logger.warning("Failed to parse Gemini validation JSON: %s", raw_text)
+            return ImageValidationResult(
+                type=ImageClassificationType.UNCERTAIN,
+                confidence=0.5,
+                description="Unable to parse image classification",
+            )
+
+        raw_type = str(payload.get("type", "uncertain")).lower().strip()
+        try:
+            conf = float(payload.get("confidence", 0.5))
+        except (ValueError, TypeError):
+            conf = 0.5
+        conf = max(0.0, min(1.0, conf))
+        desc = payload.get("description")
+
+        if raw_type in ("food", "meal", "dish", "beverage", "drink"):
+            cls_type = ImageClassificationType.FOOD
+        elif raw_type in ("barcode", "upc", "ean", "qr"):
+            cls_type = ImageClassificationType.BARCODE
+        elif raw_type in (
+            "non_food",
+            "non-food",
+            "nonfood",
+            "object",
+            "person",
+            "animal",
+            "electronics",
+        ):
+            cls_type = ImageClassificationType.NON_FOOD
+        else:
+            cls_type = ImageClassificationType.UNCERTAIN
+
+        # Apply confidence thresholding: low-confidence classifications become UNCERTAIN
+        if cls_type == ImageClassificationType.FOOD and conf < CONFIDENCE_THRESHOLD:
+            logger.info(
+                "Food classification confidence (%.2f) below threshold (%.2f), treating as uncertain",
+                conf,
+                CONFIDENCE_THRESHOLD,
+            )
+            cls_type = ImageClassificationType.UNCERTAIN
+        elif cls_type == ImageClassificationType.BARCODE and conf < 0.60:
+            cls_type = ImageClassificationType.UNCERTAIN
+
+        return ImageValidationResult(
+            type=cls_type,
+            confidence=conf,
+            description=str(desc) if desc else None,
+        )
 
     async def detect_foods(self, image_bytes: bytes, mime_type: str) -> GeminiAnalysisResult:
         """Send an image to Gemini and return validated food detections.

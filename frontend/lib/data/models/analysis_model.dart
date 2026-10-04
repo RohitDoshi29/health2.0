@@ -1,3 +1,4 @@
+import 'barcode_model.dart';
 import 'nutrition_model.dart';
 
 class BoundingBoxModel {
@@ -213,6 +214,11 @@ class MealItemAnalysisModel {
 }
 
 class MealAnalysisResponseModel {
+  final String status;
+  final String validationType;
+  final double validationConfidence;
+  final String? validationMessage;
+  final BarcodeProductModel? barcodeProduct;
   final NutritionSummaryModel total;
   final List<MealItemAnalysisModel> items;
   final List<String> unmatchedItems;
@@ -222,6 +228,11 @@ class MealAnalysisResponseModel {
   final String disclaimer;
 
   MealAnalysisResponseModel({
+    this.status = 'success',
+    this.validationType = 'food',
+    this.validationConfidence = 1.0,
+    this.validationMessage,
+    this.barcodeProduct,
     required this.total,
     required this.items,
     this.unmatchedItems = const [],
@@ -231,12 +242,33 @@ class MealAnalysisResponseModel {
     required this.disclaimer,
   });
 
+  bool get isNonFood => status == 'non_food' || validationType == 'non_food';
+  bool get isUncertain => status == 'uncertain' || validationType == 'uncertain';
+  bool get isBarcode => status == 'barcode' || validationType == 'barcode';
+  bool get isSuccess => status == 'success' && !isNonFood && !isUncertain && !isBarcode;
+
   factory MealAnalysisResponseModel.fromJson(Map<String, dynamic> json) {
     return MealAnalysisResponseModel(
-      total: NutritionSummaryModel.fromJson(json['total'] as Map<String, dynamic>),
-      items: (json['items'] as List<dynamic>)
-          .map((e) => MealItemAnalysisModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      status: json['status'] as String? ?? 'success',
+      validationType: json['validation_type'] as String? ?? 'food',
+      validationConfidence: (json['validation_confidence'] as num?)?.toDouble() ?? 1.0,
+      validationMessage: json['validation_message'] as String?,
+      barcodeProduct: json['barcode_product'] != null
+          ? BarcodeProductModel.fromJson(json['barcode_product'] as Map<String, dynamic>)
+          : null,
+      total: json['total'] != null
+          ? NutritionSummaryModel.fromJson(json['total'] as Map<String, dynamic>)
+          : NutritionSummaryModel(
+              estimatedCalories: 0,
+              protein: 0,
+              carbohydrates: 0,
+              fat: 0,
+              fiber: 0,
+            ),
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => MealItemAnalysisModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       unmatchedItems: (json['unmatched_items'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

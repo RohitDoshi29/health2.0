@@ -4,8 +4,26 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.schemas.barcode import BarcodeProductRead
 from app.schemas.nutrition import NutritionSummary
 from app.schemas.verification import VerificationDetail, VerificationStatus
+
+
+class ImageClassificationType(str, Enum):
+    """Image classification categories for upload validation."""
+
+    FOOD = "food"
+    BARCODE = "barcode"
+    NON_FOOD = "non_food"
+    UNCERTAIN = "uncertain"
+
+
+class ImageValidationResult(BaseModel):
+    """Pre-validation result determining if an uploaded image contains food, a barcode, non-food, or is uncertain."""
+
+    type: ImageClassificationType
+    confidence: float = Field(ge=0.0, le=1.0)
+    description: str | None = None
 
 
 class QuantityUnit(str, Enum):
@@ -128,8 +146,38 @@ class MealAnalysisResponse(BaseModel):
     separate, explicit step via the /meals endpoints.
     """
 
-    total: NutritionSummary
-    items: list[MealItemAnalysis]
+    status: str = Field(
+        default="success",
+        description="Outcome of image analysis: 'success', 'barcode', 'non_food', or 'uncertain'",
+    )
+    validation_type: ImageClassificationType = Field(
+        default=ImageClassificationType.FOOD,
+        description="Classification category: food, barcode, non_food, or uncertain",
+    )
+    validation_confidence: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for the validation classification",
+    )
+    validation_message: str | None = Field(
+        default=None,
+        description="User-facing message explaining validation outcome if non-food or uncertain",
+    )
+    barcode_product: BarcodeProductRead | None = Field(
+        default=None,
+        description="Resolved product details if a barcode was detected and scanned",
+    )
+    total: NutritionSummary = Field(
+        default_factory=lambda: NutritionSummary(
+            estimated_calories=0.0,
+            protein=0.0,
+            carbohydrates=0.0,
+            fat=0.0,
+            fiber=0.0,
+        )
+    )
+    items: list[MealItemAnalysis] = Field(default_factory=list)
     unmatched_items: list[str] = Field(
         default_factory=list,
         description="List of detected food item names that had no match in the nutrition database",
