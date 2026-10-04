@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/weekly_model.dart';
+import '../../core/widgets/glass_card.dart';
 import 'weekly_view_model.dart';
 
 class WeeklyView extends StatefulWidget {
@@ -42,65 +43,111 @@ class _WeeklyViewState extends State<WeeklyView> {
     final report = vm.report;
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Weekly Nutrition Report'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Weekly Nutrition Report',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded, color: AppTheme.neonEmerald),
+            tooltip: 'Refresh Report',
             onPressed: vm.isLoading ? null : () => vm.loadReport(),
           ),
         ],
       ),
-      body: vm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : report == null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Failed to load weekly report',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () => vm.loadReport(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Week-switcher navigation header
-                      _buildWeekSwitcher(context, vm, report),
-                      const SizedBox(height: 20),
-
-                      // Prior-week comparison badges
-                      _buildPriorWeekBadges(report.priorWeekComparison),
-                      const SizedBox(height: 20),
-
-                      // Summary stat cards (Averages & Weight change)
-                      _buildSummaryStats(report.dailyAverages, report.weightChange),
-                      const SizedBox(height: 24),
-
-                      // Daily Calorie vs Target Bar Chart
-                      _buildCalorieBarChart(report.dailyPoints),
-                      const SizedBox(height: 24),
-
-                      // Best Day & Worst Day cards
-                      _buildBestWorstDayCards(report.bestDay, report.worstDay),
-                      const SizedBox(height: 24),
-
-                      // Nutrient Compliance Checklist
-                      _buildNutrientCompliance(report.nutrientHits),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.4),
+            radius: 1.3,
+            colors: [
+              Color(0xFF0F241A),
+              Color(0xFF080D0B),
+            ],
+          ),
+        ),
+        child: vm.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.neonEmerald,
                 ),
+              )
+            : report == null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.cloud_off_rounded,
+                          size: 48,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Failed to load weekly report',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => vm.loadReport(),
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.neonEmerald,
+                            foregroundColor: const Color(0xFF041A0E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Week-switcher navigation header
+                        _buildWeekSwitcher(context, vm, report),
+                        const SizedBox(height: 16),
+
+                        // Prior-week comparison badges
+                        _buildPriorWeekBadges(report.priorWeekComparison),
+                        const SizedBox(height: 16),
+
+                        // Summary stat cards (Averages & Weight change)
+                        _buildSummaryStats(report.dailyAverages, report.weightChange),
+                        const SizedBox(height: 18),
+
+                        // Daily Calorie vs Target Bar Chart
+                        _buildCalorieBarChart(report.dailyPoints),
+                        const SizedBox(height: 18),
+
+                        // Best Day & Needs Focus cards
+                        _buildBestWorstDayCards(report.bestDay, report.worstDay),
+                        const SizedBox(height: 18),
+
+                        // Nutrient Compliance Checklist
+                        _buildNutrientCompliance(report.nutrientHits),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+      ),
     );
   }
 
@@ -109,25 +156,14 @@ class _WeeklyViewState extends State<WeeklyView> {
     WeeklyViewModel vm,
     WeeklyReportResponseModel report,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
+    return GlassCard(
+      glowColor: AppTheme.neonEmerald,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left),
+            icon: const Icon(Icons.chevron_left_rounded, color: AppTheme.neonEmerald),
             tooltip: 'Previous Week',
             onPressed: () => vm.previousWeek(),
           ),
@@ -139,11 +175,15 @@ class _WeeklyViewState extends State<WeeklyView> {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
+                letterSpacing: -0.2,
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right),
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color: vm.canGoNext ? AppTheme.neonEmerald : AppTheme.textMuted,
+            ),
             tooltip: 'Next Week',
             onPressed: vm.canGoNext ? () => vm.nextWeek() : null,
           ),
@@ -161,30 +201,35 @@ class _WeeklyViewState extends State<WeeklyView> {
         if (calPct != null) ...[
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: calPct <= 5 && calPct >= -5
-                    ? const Color(0xFFECFDF5)
-                    : (calPct > 5 ? const Color(0xFFFFF7ED) : const Color(0xFFEFF6FF)),
-                borderRadius: BorderRadius.circular(12),
+                    ? const Color(0x2200F59B)
+                    : (calPct > 5 ? const Color(0x22FF8A00) : const Color(0x2200B2FF)),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: calPct <= 5 && calPct >= -5
-                      ? const Color(0xFFA7F3D0)
-                      : (calPct > 5 ? const Color(0xFFFED7AA) : const Color(0xFFBFDBFE)),
+                      ? const Color(0x6600F59B)
+                      : (calPct > 5 ? const Color(0x66FF8A00) : const Color(0x6600B2FF)),
+                  width: 1.2,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    calPct >= 0 ? Icons.trending_up : Icons.trending_down,
+                    calPct >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                     size: 16,
-                    color: calPct >= 0 ? const Color(0xFFC2410C) : const Color(0xFF2563EB),
+                    color: calPct >= 0 ? const Color(0xFFFF9E33) : const Color(0xFF38BDF8),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${calPct >= 0 ? "+" : ""}${calPct.toStringAsFixed(1)}% calories vs prior week',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      '${calPct >= 0 ? "+" : ""}${calPct.toStringAsFixed(1)}% cal vs prior',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -196,26 +241,31 @@ class _WeeklyViewState extends State<WeeklyView> {
         if (protPct != null) ...[
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: protPct >= 0 ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(12),
+                color: protPct >= 0 ? const Color(0x2200F59B) : const Color(0x22FF4D4D),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: protPct >= 0 ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA),
+                  color: protPct >= 0 ? const Color(0x6600F59B) : const Color(0x66FF4D4D),
+                  width: 1.2,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    protPct >= 0 ? Icons.trending_up : Icons.trending_down,
+                    protPct >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                     size: 16,
-                    color: protPct >= 0 ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                    color: protPct >= 0 ? AppTheme.neonEmerald : const Color(0xFFFF6B6B),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${protPct >= 0 ? "+" : ""}${protPct.toStringAsFixed(1)}% protein vs prior week',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      '${protPct >= 0 ? "+" : ""}${protPct.toStringAsFixed(1)}% prot vs prior',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -226,15 +276,15 @@ class _WeeklyViewState extends State<WeeklyView> {
         if (calPct == null && protPct == null) ...[
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: const Color(0x18FFFFFF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0x22FFFFFF)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: AppTheme.textSecondary),
+                  Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.textSecondary),
                   SizedBox(width: 8),
                   Text(
                     'No prior week data for comparison',
@@ -257,7 +307,7 @@ class _WeeklyViewState extends State<WeeklyView> {
             title: 'Avg Calories',
             value: '${avgs.calories.toInt()}',
             unit: 'kcal/day',
-            icon: Icons.local_fire_department,
+            icon: Icons.local_fire_department_rounded,
             color: AppTheme.calorieColor,
           ),
         ),
@@ -267,7 +317,7 @@ class _WeeklyViewState extends State<WeeklyView> {
             title: 'Avg Protein',
             value: avgs.protein.toStringAsFixed(1),
             unit: 'g/day',
-            icon: Icons.fitness_center,
+            icon: Icons.fitness_center_rounded,
             color: AppTheme.proteinColor,
           ),
         ),
@@ -280,7 +330,7 @@ class _WeeklyViewState extends State<WeeklyView> {
                 : '–',
             unit: wtChange != null ? 'kg this week' : 'No logs',
             icon: Icons.monitor_weight_outlined,
-            color: const Color(0xFF7C3AED),
+            color: AppTheme.fatColor,
           ),
         ),
       ],
@@ -294,27 +344,24 @@ class _WeeklyViewState extends State<WeeklyView> {
     required IconData icon,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
+    return GlassCard(
+      glowColor: color,
+      padding: const EdgeInsets.all(12),
+      borderRadius: 18,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14, color: color),
+              ),
+              const SizedBox(width: 5),
               Expanded(
                 child: Text(
                   title,
@@ -334,10 +381,12 @@ class _WeeklyViewState extends State<WeeklyView> {
             value,
             style: const TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               color: AppTheme.textPrimary,
+              letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 1),
           Text(
             unit,
             style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
@@ -357,20 +406,10 @@ class _WeeklyViewState extends State<WeeklyView> {
 
     final targetVal = points.first.calorieTarget;
 
-    return Container(
+    return GlassCard(
+      glowColor: AppTheme.neonEmerald,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: 22,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -383,26 +422,33 @@ class _WeeklyViewState extends State<WeeklyView> {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                  letterSpacing: -0.3,
                 ),
               ),
               Row(
                 children: [
                   Container(
-                    width: 10,
-                    height: 10,
+                    width: 9,
+                    height: 9,
                     decoration: const BoxDecoration(
-                      color: AppTheme.primaryGreen,
+                      color: AppTheme.neonEmerald,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x6600F59B),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Text('Target Hit', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  const Text('Hit', style: TextStyle(fontSize: 11, color: AppTheme.neonEmerald, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
                   Container(
-                    width: 10,
-                    height: 10,
+                    width: 9,
+                    height: 9,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFE5E7EB),
+                      color: Color(0x44FFFFFF),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -427,7 +473,7 @@ class _WeeklyViewState extends State<WeeklyView> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: points.map((p) {
                 final barRatio = (p.calories / maxVal).clamp(0.0, 1.0);
-                final barHeight = (barRatio * 110.0).clamp(4.0, 110.0);
+                final barHeight = (barRatio * 110.0).clamp(6.0, 110.0);
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -436,8 +482,8 @@ class _WeeklyViewState extends State<WeeklyView> {
                       p.calories > 0 ? '${p.calories.toInt()}' : '–',
                       style: TextStyle(
                         fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: p.targetHit ? AppTheme.primaryGreen : AppTheme.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        color: p.targetHit ? AppTheme.neonEmerald : AppTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -445,19 +491,55 @@ class _WeeklyViewState extends State<WeeklyView> {
                       width: 28,
                       height: barHeight,
                       decoration: BoxDecoration(
-                        color: p.targetHit
-                            ? AppTheme.primaryGreen
-                            : (p.calories > 0 ? const Color(0xFFD1D5DB) : const Color(0xFFF3F4F6)),
+                        gradient: p.targetHit
+                            ? const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF00F59B),
+                                  Color(0xFF00A86B),
+                                ],
+                              )
+                            : (p.calories > 0
+                                ? const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Color(0x4400F59B),
+                                      Color(0x1800F59B),
+                                    ],
+                                  )
+                                : const LinearGradient(
+                                    colors: [
+                                      Color(0x11FFFFFF),
+                                      Color(0x08FFFFFF),
+                                    ],
+                                  )),
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        border: Border.all(
+                          color: p.targetHit
+                              ? const Color(0xAA00F59B)
+                              : const Color(0x22FFFFFF),
+                          width: 1,
+                        ),
+                        boxShadow: p.targetHit
+                            ? [
+                                const BoxShadow(
+                                  color: Color(0x4400F59B),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       p.dayName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        fontWeight: p.targetHit ? FontWeight.bold : FontWeight.w500,
+                        color: p.targetHit ? AppTheme.textPrimary : AppTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -477,23 +559,30 @@ class _WeeklyViewState extends State<WeeklyView> {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
+              color: const Color(0x1800F59B),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0x5500F59B), width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A00F59B),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.emoji_events, size: 18, color: Color(0xFF059669)),
+                    Icon(Icons.emoji_events_rounded, size: 18, color: AppTheme.neonEmerald),
                     SizedBox(width: 6),
                     Text(
                       'Best Day',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF065F46),
+                        color: AppTheme.neonEmerald,
                       ),
                     ),
                   ],
@@ -503,13 +592,15 @@ class _WeeklyViewState extends State<WeeklyView> {
                   best.dayName,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF065F46),
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${best.score} pts • ${best.calories.toInt()} kcal',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF047857)),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF6EE7B7), fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -520,23 +611,30 @@ class _WeeklyViewState extends State<WeeklyView> {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFDE68A)),
+              color: const Color(0x18FF8A00),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0x55FF8A00), width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1AFF8A00),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.insights, size: 18, color: Color(0xFFD97706)),
+                    Icon(Icons.insights_rounded, size: 18, color: Color(0xFFFF9E33)),
                     SizedBox(width: 6),
                     Text(
                       'Needs Focus',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF92400E),
+                        color: Color(0xFFFFB366),
                       ),
                     ),
                   ],
@@ -546,13 +644,15 @@ class _WeeklyViewState extends State<WeeklyView> {
                   worst.dayName,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF92400E),
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${worst.score} pts • ${worst.calories.toInt()} kcal',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFFB45309)),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFFFDBA74), fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -563,20 +663,10 @@ class _WeeklyViewState extends State<WeeklyView> {
   }
 
   Widget _buildNutrientCompliance(NutrientHitsModel hits) {
-    return Container(
+    return GlassCard(
+      glowColor: AppTheme.neonEmerald,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: 22,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -586,6 +676,7 @@ class _WeeklyViewState extends State<WeeklyView> {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 4),
@@ -594,17 +685,17 @@ class _WeeklyViewState extends State<WeeklyView> {
             style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 16),
-          _buildComplianceRow('Calories', hits.calories, AppTheme.calorieColor, Icons.local_fire_department),
-          const SizedBox(height: 10),
-          _buildComplianceRow('Protein', hits.protein, AppTheme.proteinColor, Icons.fitness_center),
-          const SizedBox(height: 10),
-          _buildComplianceRow('Carbohydrates', hits.carbohydrates, AppTheme.carbsColor, Icons.grain),
-          const SizedBox(height: 10),
-          _buildComplianceRow('Fat', hits.fat, AppTheme.fatColor, Icons.opacity),
-          const SizedBox(height: 10),
-          _buildComplianceRow('Fiber', hits.fiber, AppTheme.fiberColor, Icons.eco),
-          const SizedBox(height: 10),
-          _buildComplianceRow('Hydration', hits.water, Colors.blue.shade600, Icons.water_drop),
+          _buildComplianceRow('Calories', hits.calories, AppTheme.calorieColor, Icons.local_fire_department_rounded),
+          const SizedBox(height: 12),
+          _buildComplianceRow('Protein', hits.protein, AppTheme.proteinColor, Icons.fitness_center_rounded),
+          const SizedBox(height: 12),
+          _buildComplianceRow('Carbohydrates', hits.carbohydrates, AppTheme.carbsColor, Icons.grain_rounded),
+          const SizedBox(height: 12),
+          _buildComplianceRow('Fat', hits.fat, AppTheme.fatColor, Icons.opacity_rounded),
+          const SizedBox(height: 12),
+          _buildComplianceRow('Fiber', hits.fiber, AppTheme.fiberColor, Icons.eco_rounded),
+          const SizedBox(height: 12),
+          _buildComplianceRow('Hydration', hits.water, AppTheme.waterColor, Icons.water_drop_rounded),
         ],
       ),
     );
@@ -621,8 +712,15 @@ class _WeeklyViewState extends State<WeeklyView> {
           children: [
             Row(
               children: [
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 14, color: color),
+                ),
+                const SizedBox(width: 8),
                 Text(
                   label,
                   style: const TextStyle(
@@ -638,18 +736,18 @@ class _WeeklyViewState extends State<WeeklyView> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: daysHit >= 5 ? AppTheme.primaryGreen : AppTheme.textSecondary,
+                color: daysHit >= 5 ? AppTheme.neonEmerald : AppTheme.textSecondary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
             value: ratio,
             minHeight: 8,
-            backgroundColor: const Color(0xFFF3F4F6),
+            backgroundColor: const Color(0x18FFFFFF),
             valueColor: AlwaysStoppedAnimation<Color>(
               daysHit >= 5 ? color : color.withValues(alpha: 0.6),
             ),

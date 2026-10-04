@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 
 enum MacroFocus { calories, protein, carbs, fat, fiber }
 
+/// Premium Futuristic Health HUD Circular Nutrition & Calorie Tracker
 class NutritionOrbit extends StatefulWidget {
   final double currentCalories;
   final double targetCalories;
@@ -41,6 +42,8 @@ class _NutritionOrbitState extends State<NutritionOrbit>
   late AnimationController _appearController;
   late AnimationController _pulseController;
   late AnimationController _rotationController;
+  late AnimationController _waveController;
+
   MacroFocus _focusedMacro = MacroFocus.calories;
 
   @override
@@ -58,7 +61,12 @@ class _NutritionOrbitState extends State<NutritionOrbit>
 
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 24),
+      duration: const Duration(seconds: 36),
+    )..repeat();
+
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
     )..repeat();
   }
 
@@ -67,6 +75,7 @@ class _NutritionOrbitState extends State<NutritionOrbit>
     _appearController.dispose();
     _pulseController.dispose();
     _rotationController.dispose();
+    _waveController.dispose();
     super.dispose();
   }
 
@@ -80,12 +89,18 @@ class _NutritionOrbitState extends State<NutritionOrbit>
     });
   }
 
+  String _formatNumber(num number) {
+    return number.round().toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     final calTarget = widget.targetCalories > 0 ? widget.targetCalories : 2000.0;
-    final calCurrent = widget.currentCalories.clamp(0.0, calTarget * 2.0);
+    final calCurrent = widget.currentCalories.clamp(0.0, calTarget * 2.5);
     final calProgress = (calCurrent / calTarget).clamp(0.0, 1.0);
-    final calRemaining = math.max(0, (calTarget - calCurrent).round());
     final calPct = (calProgress * 100).round();
 
     // Protein
@@ -108,84 +123,112 @@ class _NutritionOrbitState extends State<NutritionOrbit>
     final fiberCurrent = widget.currentFiber;
     final fiberPct = ((fiberCurrent / fiberTarget) * 100).round();
 
-    return AnimatedBuilder(
-      animation: Listenable.merge([_appearController, _pulseController, _rotationController]),
-      builder: (context, child) {
-        final appearVal = CurvedAnimation(
-          parent: _appearController,
-          curve: Curves.easeOutCubic,
-        ).value;
-        final pulseVal = _pulseController.value;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        // Optimal proportions for mobile HUD
+        final totalHeight = math.max(350.0, math.min(390.0, totalWidth * 0.98));
+        final orbDiameter = math.min(210.0, totalWidth * 0.52);
+        final orbRadius = orbDiameter / 2;
+        final centerOffset = Offset(totalWidth / 2, totalHeight / 2);
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final double availableWidth = constraints.maxWidth;
-            final double orbitSize = math.min(availableWidth, 340.0);
-            final double radius = orbitSize / 2;
+        // Responsive card dimensions
+        final cardWidth = math.min(124.0, totalWidth * 0.32);
+        final cardHeight = 56.0;
 
-            return Center(
-              child: SizedBox(
-                width: orbitSize,
-                height: orbitSize + 50,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    // Glowing ambient halo
-                    Positioned(
-                      top: 20,
+        return AnimatedBuilder(
+          animation: Listenable.merge([
+            _appearController,
+            _pulseController,
+            _rotationController,
+            _waveController,
+          ]),
+          builder: (context, child) {
+            final appearVal = CurvedAnimation(
+              parent: _appearController,
+              curve: Curves.easeOutCubic,
+            ).value;
+            final pulseVal = _pulseController.value;
+            final rotVal = _rotationController.value;
+            final waveVal = _waveController.value;
+
+            return SizedBox(
+              width: totalWidth,
+              height: totalHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // 1. Deep Atmospheric Radial Glow
+                  Positioned.fill(
+                    child: Center(
                       child: Container(
-                        width: orbitSize * 0.7,
-                        height: orbitSize * 0.7,
+                        width: orbDiameter * 1.5,
+                        height: orbDiameter * 1.5,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: _getGlowColor().withValues(alpha: 0.18 + pulseVal * 0.08),
-                              blurRadius: 45,
+                              color: const Color(0xFF00F59B).withValues(
+                                alpha: 0.18 + pulseVal * 0.10,
+                              ),
+                              blurRadius: 75,
+                              spreadRadius: 15,
+                            ),
+                            BoxShadow(
+                              color: const Color(0xFF00F0FF).withValues(
+                                alpha: 0.08 + pulseVal * 0.05,
+                              ),
+                              blurRadius: 110,
                               spreadRadius: 8,
                             ),
                           ],
                         ),
                       ),
                     ),
+                  ),
 
-                    // Custom Orbit Canvas
-                    Positioned(
-                      top: 20,
-                      child: CustomPaint(
-                        size: Size(orbitSize, orbitSize),
-                        painter: _OrbitRingPainter(
-                          progress: calProgress * appearVal,
-                          pulse: pulseVal,
-                          rotation: _rotationController.value * 2 * math.pi,
-                          focus: _focusedMacro,
-                        ),
+                  // 2. Custom HUD Painter (Connectors, Nodes, Energy Waves, Rings, Ticks)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _FuturisticHealthHudPainter(
+                        progress: calProgress * appearVal,
+                        pulse: pulseVal,
+                        rotation: rotVal * 2 * math.pi,
+                        wavePhase: waveVal * 2 * math.pi,
+                        orbRadius: orbRadius,
+                        center: centerOffset,
+                        focusedMacro: _focusedMacro,
+                        totalSize: Size(totalWidth, totalHeight),
+                        cardWidth: cardWidth,
+                        cardHeight: cardHeight,
                       ),
                     ),
+                  ),
 
-                    // Central Interactive Data Hub
-                    Positioned(
-                      top: 20 + radius - 65,
-                      child: GestureDetector(
+                  // 3. Central Calorie Core Interactive Display
+                  Positioned(
+                    left: centerOffset.dx - orbRadius,
+                    top: centerOffset.dy - orbRadius,
+                    width: orbDiameter,
+                    height: orbDiameter,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
                         onTap: () {
                           setState(() {
                             _focusedMacro = MacroFocus.calories;
                           });
                           widget.onTap?.call();
                         },
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: anim,
-                            child: ScaleTransition(scale: anim, child: child),
-                          ),
+                        customBorder: const CircleBorder(),
+                        splashColor: const Color(0x3300F59B),
+                        highlightColor: const Color(0x1A00F59B),
+                        child: Center(
                           child: _buildCenterDisplay(
                             calCurrent: calCurrent.round(),
                             calTarget: calTarget.round(),
-                            calRemaining: calRemaining,
                             calPct: calPct,
+                            focusedMacro: _focusedMacro,
                             protCurrent: protCurrent.round(),
                             protTarget: protTarget.round(),
                             protPct: protPct,
@@ -202,24 +245,81 @@ class _NutritionOrbitState extends State<NutritionOrbit>
                         ),
                       ),
                     ),
+                  ),
 
-                    // Orbital Nodes (Protein, Carbs, Fat, Fiber)
-                    ..._buildMacroNodes(
-                      orbitRadius: radius * 0.86,
-                      centerOffset: const Offset(0, 0),
-                      protCurrent: protCurrent.round(),
-                      protPct: protPct,
-                      carbsCurrent: carbsCurrent.round(),
-                      carbsPct: carbsPct,
-                      fatCurrent: fatCurrent.round(),
-                      fatPct: fatPct,
-                      fiberCurrent: fiberCurrent.round(),
-                      fiberPct: fiberPct,
-                      orbitCenterY: 20 + radius,
-                      orbitCenterX: orbitSize / 2,
+                  // 4. Macro Cards (Top-Left, Top-Right, Bottom-Left, Bottom-Right)
+                  // Top-Left: Protein (Red/Coral)
+                  Positioned(
+                    left: 2,
+                    top: 6,
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: _FuturisticMacroPill(
+                      label: 'Protein',
+                      value: '${protCurrent.round()}g',
+                      target: '${protTarget.round()}g',
+                      iconEmoji: '🥩',
+                      accentColor: const Color(0xFFFF4D4D),
+                      glowColor: const Color(0xFFFF3333),
+                      isSelected: _focusedMacro == MacroFocus.protein,
+                      onTap: () => _selectMacro(MacroFocus.protein),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Top-Right: Carbs (Electric Blue)
+                  Positioned(
+                    right: 2,
+                    top: 6,
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: _FuturisticMacroPill(
+                      label: 'Carbs',
+                      value: '${carbsCurrent.round()}g',
+                      target: '${carbsTarget.round()}g',
+                      iconEmoji: '🍚',
+                      accentColor: const Color(0xFF00B2FF),
+                      glowColor: const Color(0xFF0099FF),
+                      isSelected: _focusedMacro == MacroFocus.carbs,
+                      onTap: () => _selectMacro(MacroFocus.carbs),
+                    ),
+                  ),
+
+                  // Bottom-Left: Fiber (Emerald Green)
+                  Positioned(
+                    left: 2,
+                    bottom: 6,
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: _FuturisticMacroPill(
+                      label: 'Fiber',
+                      value: '${fiberCurrent.round()}g',
+                      target: '${fiberTarget.round()}g',
+                      iconEmoji: '🥦',
+                      accentColor: const Color(0xFF00F59B),
+                      glowColor: const Color(0xFF00E676),
+                      isSelected: _focusedMacro == MacroFocus.fiber,
+                      onTap: () => _selectMacro(MacroFocus.fiber),
+                    ),
+                  ),
+
+                  // Bottom-Right: Fat (Violet Purple)
+                  Positioned(
+                    right: 2,
+                    bottom: 6,
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: _FuturisticMacroPill(
+                      label: 'Fat',
+                      value: '${fatCurrent.round()}g',
+                      target: '${fatTarget.round()}g',
+                      iconEmoji: '🥑',
+                      accentColor: const Color(0xFFA855F7),
+                      glowColor: const Color(0xFF9333EA),
+                      isSelected: _focusedMacro == MacroFocus.fat,
+                      onTap: () => _selectMacro(MacroFocus.fat),
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -228,26 +328,11 @@ class _NutritionOrbitState extends State<NutritionOrbit>
     );
   }
 
-  Color _getGlowColor() {
-    switch (_focusedMacro) {
-      case MacroFocus.protein:
-        return AppTheme.proteinColor;
-      case MacroFocus.carbs:
-        return AppTheme.carbsColor;
-      case MacroFocus.fat:
-        return AppTheme.fatColor;
-      case MacroFocus.fiber:
-        return AppTheme.fiberColor;
-      case MacroFocus.calories:
-        return AppTheme.primaryGreen;
-    }
-  }
-
   Widget _buildCenterDisplay({
     required int calCurrent,
     required int calTarget,
-    required int calRemaining,
     required int calPct,
+    required MacroFocus focusedMacro,
     required int protCurrent,
     required int protTarget,
     required int protPct,
@@ -261,304 +346,61 @@ class _NutritionOrbitState extends State<NutritionOrbit>
     required int fiberTarget,
     required int fiberPct,
   }) {
-    switch (_focusedMacro) {
-      case MacroFocus.protein:
-        return _CenterMetricBox(
-          key: const ValueKey('protein'),
-          title: 'PROTEIN',
-          value: '$protCurrent',
-          unit: 'g',
-          target: '/ $protTarget g',
-          subtext: '$protPct% of goal',
-          accentColor: AppTheme.proteinColor,
-        );
-      case MacroFocus.carbs:
-        return _CenterMetricBox(
-          key: const ValueKey('carbs'),
-          title: 'CARBOHYDRATES',
-          value: '$carbsCurrent',
-          unit: 'g',
-          target: '/ $carbsTarget g',
-          subtext: '$carbsPct% of goal',
-          accentColor: AppTheme.carbsColor,
-        );
-      case MacroFocus.fat:
-        return _CenterMetricBox(
-          key: const ValueKey('fat'),
-          title: 'HEALTHY FATS',
-          value: '$fatCurrent',
-          unit: 'g',
-          target: '/ $fatTarget g',
-          subtext: '$fatPct% of goal',
-          accentColor: AppTheme.fatColor,
-        );
-      case MacroFocus.fiber:
-        return _CenterMetricBox(
-          key: const ValueKey('fiber'),
-          title: 'DIETARY FIBER',
-          value: '$fiberCurrent',
-          unit: 'g',
-          target: '/ $fiberTarget g',
-          subtext: '$fiberPct% of goal',
-          accentColor: AppTheme.fiberColor,
-        );
-      case MacroFocus.calories:
-        return Container(
-          key: const ValueKey('calories'),
-          width: 130,
-          height: 130,
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    _formatNumber(calCurrent),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.0,
-                    ),
-                  ),
-                  const SizedBox(width: 3),
-                  const Text(
-                    'kcal',
-                    style: TextStyle(
-                      color: AppTheme.primaryGreen,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '/ ${_formatNumber(calTarget)} kcal',
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  '$calPct% completed',
-                  style: const TextStyle(
-                    color: AppTheme.primaryGreen,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-    }
-  }
+    if (focusedMacro != MacroFocus.calories) {
+      final String macroTitle;
+      final int current;
+      final int target;
+      final int pct;
+      final Color color;
 
-  String _formatNumber(int number) {
-    return number.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
-  }
+      switch (focusedMacro) {
+        case MacroFocus.protein:
+          macroTitle = 'PROTEIN';
+          current = protCurrent;
+          target = protTarget;
+          pct = protPct;
+          color = const Color(0xFFFF4D4D);
+          break;
+        case MacroFocus.carbs:
+          macroTitle = 'CARBS';
+          current = carbsCurrent;
+          target = carbsTarget;
+          pct = carbsPct;
+          color = const Color(0xFF00B2FF);
+          break;
+        case MacroFocus.fat:
+          macroTitle = 'FAT';
+          current = fatCurrent;
+          target = fatTarget;
+          pct = fatPct;
+          color = const Color(0xFFA855F7);
+          break;
+        case MacroFocus.fiber:
+          macroTitle = 'FIBER';
+          current = fiberCurrent;
+          target = fiberTarget;
+          pct = fiberPct;
+          color = const Color(0xFF00F59B);
+          break;
+        default:
+          macroTitle = 'CALORIES';
+          current = calCurrent;
+          target = calTarget;
+          pct = calPct;
+          color = AppTheme.neonEmerald;
+      }
 
-  List<Widget> _buildMacroNodes({
-    required double orbitRadius,
-    required Offset centerOffset,
-    required int protCurrent,
-    required int protPct,
-    required int carbsCurrent,
-    required int carbsPct,
-    required int fatCurrent,
-    required int fatPct,
-    required int fiberCurrent,
-    required int fiberPct,
-    required double orbitCenterY,
-    required double orbitCenterX,
-  }) {
-    // 4 positions around the circle: Top-Left (Protein), Top-Right (Carbs), Bottom-Right (Fat), Bottom-Left (Fiber)
-    final nodes = [
-      _MacroNodeData(
-        type: MacroFocus.protein,
-        label: 'Protein',
-        value: '${protCurrent}g',
-        color: AppTheme.proteinColor,
-        angle: - math.pi * 0.75, // Top-Left
-      ),
-      _MacroNodeData(
-        type: MacroFocus.carbs,
-        label: 'Carbs',
-        value: '${carbsCurrent}g',
-        color: AppTheme.carbsColor,
-        angle: - math.pi * 0.25, // Top-Right
-      ),
-      _MacroNodeData(
-        type: MacroFocus.fat,
-        label: 'Fat',
-        value: '${fatCurrent}g',
-        color: AppTheme.fatColor,
-        angle: math.pi * 0.28, // Bottom-Right
-      ),
-      _MacroNodeData(
-        type: MacroFocus.fiber,
-        label: 'Fiber',
-        value: '${fiberCurrent}g',
-        color: AppTheme.fiberColor,
-        angle: math.pi * 0.72, // Bottom-Left
-      ),
-    ];
-
-    return nodes.map((node) {
-      final isSelected = _focusedMacro == node.type;
-      final x = orbitCenterX + orbitRadius * math.cos(node.angle);
-      final y = orbitCenterY + orbitRadius * math.sin(node.angle);
-
-      return Positioned(
-        left: x - 42,
-        top: y - 24,
-        child: GestureDetector(
-          onTap: () => _selectMacro(node.type),
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: EdgeInsets.symmetric(
-              horizontal: isSelected ? 12 : 9,
-              vertical: isSelected ? 8 : 6,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? node.color.withValues(alpha: 0.25)
-                  : const Color(0xE613201B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? node.color : node.color.withValues(alpha: 0.35),
-                width: isSelected ? 1.8 : 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isSelected
-                      ? node.color.withValues(alpha: 0.4)
-                      : Colors.black.withValues(alpha: 0.4),
-                  blurRadius: isSelected ? 12 : 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: node.color,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: node.color.withValues(alpha: 0.8),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      node.label,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : AppTheme.textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      node.value,
-                      style: TextStyle(
-                        color: isSelected ? node.color : Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }).toList();
-  }
-}
-
-class _MacroNodeData {
-  final MacroFocus type;
-  final String label;
-  final String value;
-  final Color color;
-  final double angle;
-
-  _MacroNodeData({
-    required this.type,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.angle,
-  });
-}
-
-class _CenterMetricBox extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
-  final String target;
-  final String subtext;
-  final Color accentColor;
-
-  const _CenterMetricBox({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.unit,
-    required this.target,
-    required this.subtext,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 130,
-      height: 130,
-      alignment: Alignment.center,
-      child: Column(
+      return Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            title,
+            macroTitle,
             style: TextStyle(
-              color: accentColor,
-              fontSize: 10,
+              color: color,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
-              letterSpacing: 1.0,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 2),
@@ -568,186 +410,649 @@ class _CenterMetricBox extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                value,
+                '$current',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
+                  fontSize: 34,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
+                  letterSpacing: -1.0,
+                  height: 1.0,
                 ),
               ),
               const SizedBox(width: 3),
               Text(
-                unit,
+                'g',
                 style: TextStyle(
-                  color: accentColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  color: color,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 3),
           Text(
-            target,
+            '/ $target g',
             style: const TextStyle(
-              color: AppTheme.textSecondary,
+              color: Color(0xFF8E9E96),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtext,
-            style: TextStyle(
-              color: accentColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withValues(alpha: 0.5),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              '$pct% completed',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],
+      );
+    }
+
+    // Exact Match to Mockup
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          _formatNumber(calCurrent),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 42,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.2,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'kcal',
+          style: TextStyle(
+            color: AppTheme.neonEmerald,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '/ ${_formatNumber(calTarget)} kcal',
+          style: const TextStyle(
+            color: Color(0xFF8E9E96),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4.5),
+          decoration: BoxDecoration(
+            color: const Color(0x2400F59B),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0x6600F59B),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x2200F59B),
+                blurRadius: 8,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Text(
+            '$calPct% completed',
+            style: const TextStyle(
+              color: AppTheme.neonEmerald,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Futuristic Macro Card with 3D emoji and neon outer glow
+class _FuturisticMacroPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final String target;
+  final String iconEmoji;
+  final Color accentColor;
+  final Color glowColor;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FuturisticMacroPill({
+    required this.label,
+    required this.value,
+    required this.target,
+    required this.iconEmoji,
+    required this.accentColor,
+    required this.glowColor,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? glowColor.withValues(alpha: 0.22)
+              : const Color(0xE608120D),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? glowColor : glowColor.withValues(alpha: 0.70),
+            width: isSelected ? 1.8 : 1.3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: glowColor.withValues(alpha: isSelected ? 0.50 : 0.22),
+              blurRadius: isSelected ? 18 : 10,
+              spreadRadius: isSelected ? 1 : 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.55),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 3D Emoji / Food Asset with spherical badge
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: glowColor.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: glowColor.withValues(alpha: 0.35),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                iconEmoji,
+                style: const TextStyle(fontSize: 20),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.4,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _OrbitRingPainter extends CustomPainter {
+/// Custom Painter for Central Glass Energy Orb, Concentric Rings, Ticks, Segmented Calorie Ring & Integrated Connectors
+class _FuturisticHealthHudPainter extends CustomPainter {
   final double progress;
   final double pulse;
   final double rotation;
-  final MacroFocus focus;
+  final double wavePhase;
+  final double orbRadius;
+  final Offset center;
+  final MacroFocus focusedMacro;
+  final Size totalSize;
+  final double cardWidth;
+  final double cardHeight;
 
-  _OrbitRingPainter({
+  _FuturisticHealthHudPainter({
     required this.progress,
     required this.pulse,
     required this.rotation,
-    required this.focus,
+    required this.wavePhase,
+    required this.orbRadius,
+    required this.center,
+    required this.focusedMacro,
+    required this.totalSize,
+    required this.cardWidth,
+    required this.cardHeight,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = (size.width / 2) - 16;
-    final innerRadius = outerRadius - 16;
+    // 1. Draw Integrated Curved Connectors to Cards
+    _drawConnectors(canvas);
 
-    // Background track ring
-    final bgPaint = Paint()
-      ..color = const Color(0x1F00E676)
+    // 2. Draw 3D Energy Core Glass Orb (fluid aurora filaments & glowing particles)
+    _drawEnergyOrb(canvas);
+
+    // 3. Draw Concentric Inner HUD Dial & Precision Ticks
+    _drawInnerHudDial(canvas);
+
+    // 4. Draw Segmented Progress Ring (4 distinct quadrants with neon glow)
+    _drawSegmentedProgressRing(canvas);
+
+    // 5. Draw Outer HUD Ring & Rotating Telemetry Arcs
+    _drawOuterHudRings(canvas);
+
+    // 6. Draw Glowing Connection Nodes & Quadrant Divider Dots
+    _drawConnectorNodes(canvas);
+  }
+
+  void _drawConnectors(Canvas canvas) {
+    final ringRadius = orbRadius + 18.0;
+
+    // Node contact angles on HUD ring
+    const tlAngle = math.pi * 1.20; // Top-Left (~216 deg)
+    const trAngle = -math.pi * 0.20; // Top-Right (~-36 deg)
+    const blAngle = math.pi * 0.80; // Bottom-Left (~144 deg)
+    const brAngle = math.pi * 0.20; // Bottom-Right (~36 deg)
+
+    // Contact points on the HUD ring
+    final tlNode = Offset(center.dx + ringRadius * math.cos(tlAngle), center.dy + ringRadius * math.sin(tlAngle));
+    final trNode = Offset(center.dx + ringRadius * math.cos(trAngle), center.dy + ringRadius * math.sin(trAngle));
+    final blNode = Offset(center.dx + ringRadius * math.cos(blAngle), center.dy + ringRadius * math.sin(blAngle));
+    final brNode = Offset(center.dx + ringRadius * math.cos(brAngle), center.dy + ringRadius * math.sin(brAngle));
+
+    // Card anchors
+    final tlCardAnchor = Offset(2.0 + cardWidth, 6.0 + cardHeight * 0.65);
+    final trCardAnchor = Offset(totalSize.width - 2.0 - cardWidth, 6.0 + cardHeight * 0.65);
+    final blCardAnchor = Offset(2.0 + cardWidth, totalSize.height - 6.0 - cardHeight * 0.65);
+    final brCardAnchor = Offset(totalSize.width - 2.0 - cardWidth, totalSize.height - 6.0 - cardHeight * 0.65);
+
+    _drawSmoothCurvedPointer(canvas, tlCardAnchor, tlNode, const Color(0xFFFF4D4D));
+    _drawSmoothCurvedPointer(canvas, trCardAnchor, trNode, const Color(0xFF00B2FF));
+    _drawSmoothCurvedPointer(canvas, blCardAnchor, blNode, const Color(0xFF00F59B));
+    _drawSmoothCurvedPointer(canvas, brCardAnchor, brNode, const Color(0xFFA855F7));
+  }
+
+  void _drawSmoothCurvedPointer(Canvas canvas, Offset cardAnchor, Offset ringNode, Color color) {
+    final path = Path();
+    path.moveTo(cardAnchor.dx, cardAnchor.dy);
+
+    final midX = (cardAnchor.dx + ringNode.dx) / 2;
+    path.cubicTo(
+      midX,
+      cardAnchor.dy,
+      midX,
+      ringNode.dy,
+      ringNode.dx,
+      ringNode.dy,
+    );
+
+    // Glowing blur aura
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.35 + pulse * 0.15)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 9;
+      ..strokeWidth = 3.6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawPath(path, glowPaint);
 
-    canvas.drawCircle(center, outerRadius, bgPaint);
+    // Crisp neon laser line
+    final linePaint = Paint()
+      ..color = color.withValues(alpha: 0.88)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, linePaint);
+  }
 
-    // Subtle dotted decorative ring
-    final dotPaint = Paint()
-      ..color = const Color(0x1AFFFFFF)
+  void _drawEnergyOrb(Canvas canvas) {
+    canvas.save();
+    final orbPath = Path()..addOval(Rect.fromCircle(center: center, radius: orbRadius));
+    canvas.clipPath(orbPath);
+
+    // Deep Cosmic Obsidian Sphere Base
+    final bgPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF052417),
+          const Color(0xFF03140C),
+          const Color(0xFF010805),
+        ],
+        stops: const [0.0, 0.72, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: orbRadius));
+    canvas.drawCircle(center, orbRadius, bgPaint);
+
+    // Silk Aurora Wave Filaments
+    final waveCount = 6;
+    for (int i = 0; i < waveCount; i++) {
+      final wavePath = Path();
+      final phase = wavePhase + (i * math.pi / 3.0);
+      final amplitude = 14.0 + (i * 3.0);
+      final freq = 0.024 + (i * 0.005);
+      final yOffset = center.dy + (math.sin(phase * 0.6) * (orbRadius * 0.38)) + ((i - 2.5) * 14.0);
+
+      wavePath.moveTo(center.dx - orbRadius, yOffset);
+      for (double x = center.dx - orbRadius; x <= center.dx + orbRadius; x += 3.5) {
+        final relX = x - center.dx;
+        final envelope = math.cos((relX / orbRadius).clamp(-1.0, 1.0) * (math.pi / 2.2));
+        final y = yOffset + math.sin(relX * freq + phase) * amplitude * envelope;
+        wavePath.lineTo(x, y);
+      }
+
+      final waveGlow = Paint()
+        ..color = const Color(0xFF00F59B).withValues(alpha: 0.12 + (i % 2 == 0 ? 0.10 : 0.06))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.5);
+      canvas.drawPath(wavePath, waveGlow);
+
+      final waveCore = Paint()
+        ..color = const Color(0xFF00F59B).withValues(alpha: 0.28 + (i % 2 == 0 ? 0.20 : 0.12))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1;
+      canvas.drawPath(wavePath, waveCore);
+    }
+
+    // Floating Bioluminescent 3D Dust Particles
+    final particleCount = 14;
+    for (int i = 0; i < particleCount; i++) {
+      final pAngle = (i * (2 * math.pi / particleCount)) + (wavePhase * 0.35);
+      final pDist = (orbRadius * 0.70) * ((math.sin(pAngle * 2.5 + pulse * 2.0) + 1.2) / 2.4);
+      final px = center.dx + pDist * math.cos(pAngle);
+      final py = center.dy + pDist * math.sin(pAngle);
+
+      final pAlpha = (0.25 + 0.45 * math.sin(wavePhase * 2.5 + i)).clamp(0.0, 1.0);
+      final pPaint = Paint()
+        ..color = const Color(0xFF00F59B).withValues(alpha: pAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawCircle(Offset(px, py), (i % 3 == 0) ? 2.2 : 1.4, pPaint);
+    }
+
+    // Spherical Glass Rim Caustic Glow
+    final rimPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.transparent,
+          const Color(0x3300F59B),
+          const Color(0xCC00F59B),
+        ],
+        stops: const [0.72, 0.90, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: orbRadius))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5.0;
+    canvas.drawCircle(center, orbRadius - 2.5, rimPaint);
+
+    canvas.restore();
+
+    // Orb Glass Highlight Border
+    final edgePaint = Paint()
+      ..color = const Color(0x6600F59B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
+    canvas.drawCircle(center, orbRadius, edgePaint);
+  }
 
-    canvas.drawCircle(center, innerRadius + 4, dotPaint);
+  void _drawInnerHudDial(Canvas canvas) {
+    final dialRadius = orbRadius + 6.5;
 
-    // Dynamic color gradient based on focus
-    final List<Color> arcColors;
-    switch (focus) {
-      case MacroFocus.protein:
-        arcColors = [const Color(0xFFFF8A80), AppTheme.proteinColor];
-        break;
-      case MacroFocus.carbs:
-        arcColors = [const Color(0xFF82B1FF), AppTheme.carbsColor];
-        break;
-      case MacroFocus.fat:
-        arcColors = [const Color(0xFFEA80FC), AppTheme.fatColor];
-        break;
-      case MacroFocus.fiber:
-        arcColors = [const Color(0xFFB9F6CA), AppTheme.fiberColor];
-        break;
-      case MacroFocus.calories:
-        arcColors = [const Color(0xFF00B0FF), const Color(0xFF00E676), const Color(0xFF76FF03)];
-        break;
+    // Track ring
+    final dialPaint = Paint()
+      ..color = const Color(0x28FFFFFF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawCircle(center, dialRadius, dialPaint);
+
+    // 72 Radial Precision Ticks
+    const totalTicks = 72;
+    for (int i = 0; i < totalTicks; i++) {
+      final angle = (i * 2 * math.pi / totalTicks);
+      final isMajor = i % 9 == 0;
+      final isMedium = i % 3 == 0;
+
+      final tickLen = isMajor ? 5.5 : (isMedium ? 3.5 : 2.0);
+      final startR = dialRadius + 1.2;
+      final endR = startR + tickLen;
+
+      final pStart = Offset(center.dx + startR * math.cos(angle), center.dy + startR * math.sin(angle));
+      final pEnd = Offset(center.dx + endR * math.cos(angle), center.dy + endR * math.sin(angle));
+
+      final tickPaint = Paint()
+        ..color = isMajor
+            ? const Color(0xEE00F59B)
+            : (isMedium ? const Color(0x77FFFFFF) : const Color(0x28FFFFFF))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isMajor ? 1.6 : 1.0;
+
+      canvas.drawLine(pStart, pEnd, tickPaint);
+    }
+  }
+
+  void _drawSegmentedProgressRing(Canvas canvas) {
+    final trackRadius = orbRadius + 18.0;
+    const strokeW = 9.0;
+
+    // 4 distinct quadrants with 9-degree gaps at dividing points
+    const numSegments = 4;
+    const segmentSpan = (2 * math.pi) / numSegments;
+    const gapAngle = 0.16; // ~9.2 degrees
+    const startAngleOffset = -math.pi / 2;
+
+    for (int i = 0; i < numSegments; i++) {
+      final segStart = startAngleOffset + (i * segmentSpan) + (gapAngle / 2);
+      final segSweep = segmentSpan - gapAngle;
+
+      // Dark emerald recessed track
+      final trackBgPaint = Paint()
+        ..color = const Color(0x1C00F59B)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = strokeW;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: trackRadius),
+        segStart,
+        segSweep,
+        false,
+        trackBgPaint,
+      );
+
+      // Track outer hairline
+      final trackBorder = Paint()
+        ..color = const Color(0x3500F59B)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 1.0;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: trackRadius + (strokeW / 2)),
+        segStart,
+        segSweep,
+        false,
+        trackBorder,
+      );
     }
 
+    // Vibrant Glowing Active Calorie Progress
     if (progress > 0) {
-      final sweepAngle = 2 * math.pi * progress;
-      final startAngle = -math.pi / 2;
+      final totalActiveAngle = progress * (2 * math.pi);
 
-      // Glow paint behind the arc
+      for (int i = 0; i < numSegments; i++) {
+        final segStart = startAngleOffset + (i * segmentSpan) + (gapAngle / 2);
+        final segSweep = segmentSpan - gapAngle;
+        final segProgressStart = i * segmentSpan;
+
+        if (totalActiveAngle > segProgressStart) {
+          final activeSweepInSegment = (totalActiveAngle - segProgressStart).clamp(0.0, segSweep);
+
+          if (activeSweepInSegment > 0) {
+            final rect = Rect.fromCircle(center: center, radius: trackRadius);
+
+            // Diffuse Neon Aura
+            final glowPaint = Paint()
+              ..shader = const SweepGradient(
+                colors: [Color(0xFF00F59B), Color(0xFF00E5FF), Color(0xFF00F59B)],
+              ).createShader(rect)
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeWidth = strokeW + 4.5
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+            canvas.drawArc(rect, segStart, activeSweepInSegment, false, glowPaint);
+
+            // Solid Radiant Neon Core
+            final activePaint = Paint()
+              ..shader = const SweepGradient(
+                colors: [Color(0xFF00F59B), Color(0xFF00F0FF), Color(0xFF70FFB8)],
+              ).createShader(rect)
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeWidth = strokeW;
+
+            canvas.drawArc(rect, segStart, activeSweepInSegment, false, activePaint);
+          }
+        }
+      }
+    }
+  }
+
+  void _drawOuterHudRings(Canvas canvas) {
+    final outerRadius = orbRadius + 28.5;
+
+    // Outer subtle baseline track
+    final outerPaint = Paint()
+      ..color = const Color(0x1F00F59B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawCircle(center, outerRadius, outerPaint);
+
+    // Rotating outer telemetry bracket arcs
+    final arcPaint = Paint()
+      ..color = const Color(0x5500F59B)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.2;
+
+    canvas.drawArc(Rect.fromCircle(center: center, radius: outerRadius), rotation, math.pi * 0.35, false, arcPaint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: outerRadius), rotation + math.pi, math.pi * 0.35, false, arcPaint);
+
+    // Orbiting Satellite Beacon Tick
+    final satAngle = -rotation * 1.4;
+    final satX = center.dx + outerRadius * math.cos(satAngle);
+    final satY = center.dy + outerRadius * math.sin(satAngle);
+
+    final satGlow = Paint()
+      ..color = const Color(0xFF00F59B).withValues(alpha: 0.7)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+    canvas.drawCircle(Offset(satX, satY), 3.2, satGlow);
+
+    final satCore = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(satX, satY), 1.6, satCore);
+  }
+
+  void _drawConnectorNodes(Canvas canvas) {
+    final ringRadius = orbRadius + 18.0;
+
+    // 4 Quadrant Divider Beads (Top, Right, Bottom, Left)
+    const quadrantAngles = [-math.pi / 2, 0.0, math.pi / 2, math.pi];
+    for (final qAngle in quadrantAngles) {
+      final qx = center.dx + ringRadius * math.cos(qAngle);
+      final qy = center.dy + ringRadius * math.sin(qAngle);
+
+      final qDotPaint = Paint()
+        ..color = const Color(0x8800F59B)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(qx, qy), 2.5, qDotPaint);
+    }
+
+    // 4 Macro Connector Nodes
+    final nodes = [
+      (math.pi * 1.20, const Color(0xFFFF4D4D)), // Protein (Top-Left)
+      (-math.pi * 0.20, const Color(0xFF00B2FF)), // Carbs (Top-Right)
+      (math.pi * 0.80, const Color(0xFF00F59B)),  // Fiber (Bottom-Left)
+      (math.pi * 0.20, const Color(0xFFA855F7)),  // Fat (Bottom-Right)
+    ];
+
+    for (final node in nodes) {
+      final angle = node.$1;
+      final color = node.$2;
+
+      final nx = center.dx + ringRadius * math.cos(angle);
+      final ny = center.dy + ringRadius * math.sin(angle);
+
+      // Node Glow Halo
       final glowPaint = Paint()
-        ..shader = SweepGradient(
-          startAngle: 0.0,
-          endAngle: 2 * math.pi,
-          colors: arcColors,
-          transform: GradientRotation(startAngle),
-        ).createShader(Rect.fromCircle(center: center, radius: outerRadius))
+        ..color = color.withValues(alpha: 0.55 + pulse * 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawCircle(Offset(nx, ny), 7.5, glowPaint);
+
+      // Node Outer Ring
+      final nodeBorder = Paint()
+        ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 14
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        ..strokeWidth = 1.6;
+      canvas.drawCircle(Offset(nx, ny), 4.8, nodeBorder);
 
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: outerRadius),
-        startAngle,
-        sweepAngle,
-        false,
-        glowPaint,
-      );
-
-      // Main active arc
-      final activePaint = Paint()
-        ..shader = SweepGradient(
-          startAngle: 0.0,
-          endAngle: 2 * math.pi,
-          colors: arcColors,
-          transform: GradientRotation(startAngle),
-        ).createShader(Rect.fromCircle(center: center, radius: outerRadius))
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 9;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: outerRadius),
-        startAngle,
-        sweepAngle,
-        false,
-        activePaint,
-      );
-
-      // Glowing dot at the tip
-      final tipAngle = startAngle + sweepAngle;
-      final tipX = center.dx + outerRadius * math.cos(tipAngle);
-      final tipY = center.dy + outerRadius * math.sin(tipAngle);
-
-      final tipGlowPaint = Paint()
-        ..color = arcColors.last.withValues(alpha: 0.5)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      canvas.drawCircle(Offset(tipX, tipY), 7, tipGlowPaint);
-
-      final tipPaint = Paint()
+      // Node Center Core Dot
+      final centerDot = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(tipX, tipY), 4.5, tipPaint);
-    }
-
-    // Floating orbital sci-fi particles
-    final particleCount = 6;
-    for (int i = 0; i < particleCount; i++) {
-      final pAngle = rotation + (i * (2 * math.pi / particleCount));
-      final pRadius = innerRadius + (math.sin(pAngle * 2 + pulse) * 4);
-      final px = center.dx + pRadius * math.cos(pAngle);
-      final py = center.dy + pRadius * math.sin(pAngle);
-
-      final particlePaint = Paint()
-        ..color = AppTheme.primaryGreen.withValues(alpha: 0.3 + (i % 2 == 0 ? 0.3 : 0.1))
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(px, py), 1.8, particlePaint);
+      canvas.drawCircle(Offset(nx, ny), 2.6, centerDot);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _OrbitRingPainter oldDelegate) {
+  bool shouldRepaint(covariant _FuturisticHealthHudPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.pulse != pulse ||
         oldDelegate.rotation != rotation ||
-        oldDelegate.focus != focus;
+        oldDelegate.wavePhase != wavePhase ||
+        oldDelegate.focusedMacro != focusedMacro ||
+        oldDelegate.orbRadius != orbRadius ||
+        oldDelegate.center != center ||
+        oldDelegate.cardWidth != cardWidth ||
+        oldDelegate.cardHeight != cardHeight;
   }
 }

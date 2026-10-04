@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../features/water/water_view_model.dart';
+import 'glass_card.dart';
 
 class WaterTrackerCard extends StatelessWidget {
   const WaterTrackerCard({super.key});
@@ -12,12 +13,23 @@ class WaterTrackerCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: const Color(0xFF0D1814),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: Color(0x4400F0FF), width: 1.5),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.water_drop, color: Colors.blue),
+            Icon(Icons.water_drop_rounded, color: Color(0xFF00F0FF)),
             SizedBox(width: 8),
-            Text('Log Water Intake'),
+            Text(
+              'Log Water Intake',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -28,15 +40,32 @@ class WaterTrackerCard extends StatelessWidget {
               'Enter amount in milliliters (ml):',
               style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               autofocus: true,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
                 labelText: 'Amount (ml)',
+                labelStyle: const TextStyle(color: AppTheme.textSecondary),
                 suffixText: 'ml',
-                prefixIcon: Icon(Icons.local_drink),
+                suffixStyle: const TextStyle(color: Color(0xFF00F0FF), fontWeight: FontWeight.bold),
+                prefixIcon: const Icon(Icons.local_drink_rounded, color: Color(0xFF00F0FF)),
+                filled: true,
+                fillColor: const Color(0xFF16251E),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0x2200F0FF)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0x2200F0FF)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF00F0FF), width: 1.5),
+                ),
               ),
             ),
           ],
@@ -44,12 +73,13 @@ class WaterTrackerCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade600,
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF00F0FF),
+              foregroundColor: const Color(0xFF041A16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
               final val = double.tryParse(controller.text.trim());
@@ -58,7 +88,7 @@ class WaterTrackerCard extends StatelessWidget {
                 waterVm.quickLog(val);
               }
             },
-            child: const Text('Log'),
+            child: const Text('Log', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -72,8 +102,25 @@ class WaterTrackerCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Daily Water Target'),
+        backgroundColor: const Color(0xFF0D1814),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: Color(0x4400F0FF), width: 1.5),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.flag_rounded, color: Color(0xFF00F0FF)),
+            SizedBox(width: 8),
+            Text(
+              'Daily Water Target',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,15 +129,32 @@ class WaterTrackerCard extends StatelessWidget {
               'Set your daily hydration goal (ml):',
               style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               autofocus: true,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
                 labelText: 'Target (ml)',
+                labelStyle: const TextStyle(color: AppTheme.textSecondary),
                 suffixText: 'ml',
-                prefixIcon: Icon(Icons.flag_outlined),
+                suffixStyle: const TextStyle(color: Color(0xFF00F0FF), fontWeight: FontWeight.bold),
+                prefixIcon: const Icon(Icons.flag_outlined, color: Color(0xFF00F0FF)),
+                filled: true,
+                fillColor: const Color(0xFF16251E),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0x2200F0FF)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0x2200F0FF)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFF00F0FF), width: 1.5),
+                ),
               ),
             ),
           ],
@@ -98,12 +162,13 @@ class WaterTrackerCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade600,
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF00F0FF),
+              foregroundColor: const Color(0xFF041A16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
               final val = double.tryParse(controller.text.trim());
@@ -112,7 +177,7 @@ class WaterTrackerCard extends StatelessWidget {
                 waterVm.updateGoal(val);
               }
             },
-            child: const Text('Save Goal'),
+            child: const Text('Save Goal', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -128,20 +193,10 @@ class WaterTrackerCard extends StatelessWidget {
         : 0.0;
     final remainingMl = (summary.targetMl - summary.totalMl).clamp(0.0, double.infinity);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return GlassCard(
+      glowColor: const Color(0xFF00F0FF),
       padding: const EdgeInsets.all(18),
+      borderRadius: 22,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -154,43 +209,58 @@ class WaterTrackerCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0x2200F0FF),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0x4400F0FF)),
                     ),
-                    child: Icon(Icons.water_drop, color: Colors.blue.shade600, size: 20),
+                    child: const Icon(Icons.water_drop_rounded, color: Color(0xFF00F0FF), size: 20),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Hydration',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hydration',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      Text(
+                        'Daily bio-fluid intake tracker',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               GestureDetector(
                 onTap: () => _showEditGoalDialog(context, waterVm),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0x1A00F0FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0x3300F0FF)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         '${summary.totalMl.toStringAsFixed(0)} / ${summary.targetMl.toStringAsFixed(0)} ml',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF00F0FF),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.edit, size: 12, color: Colors.blue.shade700),
+                      const Icon(Icons.edit_rounded, size: 12, color: Color(0xFF00F0FF)),
                     ],
                   ),
                 ),
@@ -210,13 +280,13 @@ class WaterTrackerCard extends StatelessWidget {
                     '${summary.percentage.toStringAsFixed(0)}% completed',
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: summary.percentage >= 100 ? Colors.green.shade700 : Colors.blue.shade700,
+                      fontWeight: FontWeight.w800,
+                      color: summary.percentage >= 100 ? AppTheme.neonEmerald : const Color(0xFF00F0FF),
                     ),
                   ),
                   Text(
                     summary.percentage >= 100
-                        ? 'Goal reached! 🎉'
+                        ? 'Target reached! 💧'
                         : '${remainingMl.toStringAsFixed(0)} ml remaining',
                     style: const TextStyle(
                       fontSize: 12,
@@ -229,12 +299,32 @@ class WaterTrackerCard extends StatelessWidget {
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progressRatio,
-                  minHeight: 10,
-                  backgroundColor: Colors.blue.shade50,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    summary.percentage >= 100 ? Colors.green.shade500 : Colors.blue.shade500,
+                child: Container(
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: const Color(0x1800F0FF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0x2200F0FF)),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progressRatio,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: summary.percentage >= 100
+                              ? [const Color(0xFF00F59B), const Color(0xFF00F0FF)]
+                              : [const Color(0xFF00B2FF), const Color(0xFF00F0FF)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x6600F0FF),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -248,28 +338,28 @@ class WaterTrackerCard extends StatelessWidget {
               _buildQuickAddButton(
                 label: '+250 ml',
                 sublabel: 'Glass',
-                icon: Icons.local_drink_outlined,
+                icon: Icons.local_drink_rounded,
                 onPressed: () => waterVm.quickLog(250),
               ),
               const SizedBox(width: 8),
               _buildQuickAddButton(
                 label: '+500 ml',
                 sublabel: 'Bottle',
-                icon: Icons.sports_bar_outlined,
+                icon: Icons.water_drop_outlined,
                 onPressed: () => waterVm.quickLog(500),
               ),
               const SizedBox(width: 8),
               _buildQuickAddButton(
                 label: '+750 ml',
-                sublabel: 'Large',
-                icon: Icons.water_outlined,
+                sublabel: 'Flask',
+                icon: Icons.opacity_rounded,
                 onPressed: () => waterVm.quickLog(750),
               ),
               const SizedBox(width: 8),
               _buildQuickAddButton(
                 label: 'Custom',
                 sublabel: 'Any',
-                icon: Icons.add,
+                icon: Icons.add_rounded,
                 onPressed: () => _showCustomWaterDialog(context, waterVm),
               ),
             ],
@@ -278,8 +368,8 @@ class WaterTrackerCard extends StatelessWidget {
           // Recent Logs Preview
           if (summary.logs.isNotEmpty) ...[
             const SizedBox(height: 14),
-            const Divider(height: 1, color: Color(0xFFF3F4F6)),
-            const SizedBox(height: 8),
+            const Divider(height: 1, color: Color(0x2200F0FF)),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -297,38 +387,39 @@ class WaterTrackerCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 6,
               runSpacing: 6,
               children: summary.logs.take(4).map((log) {
                 final timeStr = DateFormat('h:mm a').format(log.loggedAt.toLocal());
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0x1800F0FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0x3300F0FF)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         '+${log.amountMl.toStringAsFixed(0)}ml',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade800,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF00F0FF),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
                         timeStr,
                         style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => waterVm.deleteLog(log.id),
-                        child: Icon(Icons.close, size: 13, color: Colors.red.shade400),
+                        child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFFF6B6B)),
                       ),
                     ],
                   ),
@@ -352,31 +443,35 @@ class WaterTrackerCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0x3300F0FF),
+          highlightColor: const Color(0x1A00F0FF),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue.shade100),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.blue.shade50.withValues(alpha: 0.5),
+              border: Border.all(color: const Color(0x3300F0FF)),
+              borderRadius: BorderRadius.circular(14),
+              color: const Color(0x1200F0FF),
             ),
             child: Column(
               children: [
-                Icon(icon, size: 18, color: Colors.blue.shade700),
-                const SizedBox(height: 2),
+                Icon(icon, size: 18, color: const Color(0xFF00F0FF)),
+                const SizedBox(height: 3),
                 Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade900,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
                   ),
                 ),
                 Text(
                   sublabel,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.blue.shade600,
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    color: Color(0xFF00F0FF),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
