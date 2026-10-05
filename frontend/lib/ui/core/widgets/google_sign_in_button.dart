@@ -19,14 +19,14 @@ class GoogleSignInButton extends StatelessWidget {
       width: double.infinity,
       height: 52,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0x18FFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
+        border: Border.all(color: const Color(0x2AFFFFFF), width: 1.2),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Color(0x22000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -35,6 +35,8 @@ class GoogleSignInButton extends StatelessWidget {
         child: InkWell(
           onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0x2200F59B),
+          highlightColor: const Color(0x1100F59B),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -44,10 +46,13 @@ class GoogleSignInButton extends StatelessWidget {
                   const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppTheme.neonEmerald,
+                    ),
                   )
                 else ...[
-                  // Custom Google G Icon rendered crisply
+                  // Google G Icon rendered crisply
                   _buildGoogleIcon(),
                   const SizedBox(width: 12),
                   Text(
@@ -56,6 +61,7 @@ class GoogleSignInButton extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -95,4 +101,3 @@ class GoogleSignInButton extends StatelessWidget {
     );
   }
 }
-
